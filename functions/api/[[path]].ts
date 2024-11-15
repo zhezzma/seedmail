@@ -6,7 +6,8 @@ import { handleLogin } from '../../libs/handlers/authHandlers';
 import {
     handleStoreEmail,
     handleListEmails,
-    handleSendEmail
+    handleSendEmail,
+    handleListRecipients
 } from '../../libs/handlers/emailHandlers';
 import * as emailService from '../../libs/services/emailService';
 
@@ -50,6 +51,10 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
         switch (true) {
             case url.pathname === '/api/emails' && request.method === 'GET':
                 response = await handleListEmails(request, env, requestId);
+                break;
+
+            case url.pathname === '/api/recipients' && request.method === 'GET':
+                response = await handleListRecipients(request, env, requestId);
                 break;
 
             case url.pathname.startsWith('/api/emails/') && request.method === 'GET': {

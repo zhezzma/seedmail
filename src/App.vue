@@ -13,6 +13,11 @@ const menu = [
     name: '写邮件',
     path: '/compose',
     icon: 'edit'
+  },
+  {
+    name: '收件人列表',
+    path: '/recipients',
+    icon: 'user-circle'
   }
 ];
 

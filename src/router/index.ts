@@ -29,6 +29,12 @@ const routes = [
     name: 'ComposeEmail',
     component: () => import('../views/ComposeEmail.vue'),
     meta: { requiresAuth: true }
+  },
+  {
+    path: '/recipients',
+    name: 'Recipients',
+    component: () => import('../views/Recipients.vue'),
+    meta: { requiresAuth: true }
   }
 ];
 

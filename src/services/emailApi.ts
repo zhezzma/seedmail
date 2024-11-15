@@ -46,5 +46,14 @@ export const emailApi = {
     );
     if (!response.ok) throw new Error('Failed to send email');
     return response.json();
+  },
+
+  async listRecipients(page: number = 1, pageSize: number = 20) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/recipients?page=${page}&pageSize=${pageSize}`,
+      { headers: getHeaders() }
+    );
+    if (!response.ok) throw new Error('Failed to fetch recipients');
+    return response.json();
   }
 };

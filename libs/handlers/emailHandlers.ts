@@ -51,26 +51,7 @@ export async function handleListEmails(
 
   try {
     // 检查并清理过期邮件
-    const indexKey = 'email_index';
-    const index = await env.EMAILS.get(indexKey, 'json') as EmailMeta[] || [];
-    
-    if (index.length > 500) {
-      console.log(`[${requestId}] 邮件索引超过500条，开始清理旧邮件`);
-      // 保留最新的500条记录
-      const newIndex = index.slice(0, 500);
-      // 需要删除的邮件ID
-      const emailsToDelete = index.slice(500).map(email => email.id);
-      
-      // 批量删除旧邮件
-      await Promise.all(emailsToDelete.map(async (emailId) => {
-        await env.EMAILS.delete(`email:${emailId}`);
-        console.log(`[${requestId}] 删除旧邮件: ${emailId}`);
-      }));
-
-      // 更新索引
-      await env.EMAILS.put(indexKey, JSON.stringify(newIndex));
-      console.log(`[${requestId}] 邮件索引清理完成，当前数量: ${newIndex.length}`);
-    }
+    await emailService.cleanupOldEmails(env.EMAILS, requestId);
 
     const result = await emailService.listEmails(env.EMAILS, page, pageSize);
     
@@ -146,3 +127,31 @@ export async function handleSendEmail(
       );
     }
   }
+
+export async function handleListRecipients(
+  request: Request, 
+  env: Env, 
+  requestId: string
+): Promise<Response> {
+  const url = new URL(request.url);
+  const page = parseInt(url.searchParams.get('page') || '1');
+  const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
+
+  try {
+    const result = await emailService.listRecipients(env.EMAILS, page, pageSize);
+    
+    return new Response(
+      JSON.stringify({
+        recipients: result.recipients,
+        total: result.total,
+        page,
+        pageSize,
+        totalPages: result.totalPages
+      }),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error(`[${requestId}] 获取收件人列表失败:`, error);
+    throw error;
+  }
+}
