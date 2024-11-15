@@ -21,17 +21,6 @@ export interface EmailRecord {
 }
 
 /**
- * 邮件基础信息
- */
-export interface EmailMeta {
-    id: string;
-    from: string;
-    to: string;
-    subject: string;
-    receivedAt: string;
-}
-
-/**
  * 分页响应接口
  */
 export interface PaginatedResponse<T> {
