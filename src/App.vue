@@ -56,7 +56,7 @@ const logout = () => {
       </t-header>
 
       <!-- 内容区 -->
-      <t-content class="bg-gray-50">
+      <t-content class="bg-gray-50 flex-1 overflow-y-auto">
         <router-view v-slot="{ Component }">
           <transition name="fade" mode="out-in">
             <component :is="Component" />

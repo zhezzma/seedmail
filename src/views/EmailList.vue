@@ -16,19 +16,18 @@ const emails = ref<EmailRecord[]>([]);
 const pagination = ref({
   total: 100,
   current:1,
-  pageSize:20
+  pageSize:10
 });
 
 const columns = ref([
-  { colKey: 'from', title: '发件人', width: 200 },
-  { colKey: 'to', title: '收件人', width: 200 },
-  { colKey: 'subject', title: '主题' },
+  { colKey: 'from', title: '发件人', width: 150 },
+  { colKey: 'to', title: '收件人', width: 150 },
+  { colKey: 'subject', title: '主题',    width: 300 },
   {
     colKey: 'receivedAt',
     title: '接收时间',
-    width: 180,
+    width: 120,
     cell: (h: any, { row }: { row: EmailRecord }) => {
-
       return new Date(row.receivedAt).toLocaleString();
     }
   },
