@@ -1,4 +1,4 @@
-import { EmailRecord, EmailSendRequest, Env } from '../types/email';
+import { EmailMeta, EmailRecord, EmailSendRequest, Env } from '../types/email';
 import * as emailService from '../services/emailService';
 
 export async function handleStoreEmail(
@@ -50,6 +50,28 @@ export async function handleListEmails(
   const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
 
   try {
+    // 检查并清理过期邮件
+    const indexKey = 'email_index';
+    const index = await env.EMAILS.get(indexKey, 'json') as EmailMeta[] || [];
+    
+    if (index.length > 500) {
+      console.log(`[${requestId}] 邮件索引超过500条，开始清理旧邮件`);
+      // 保留最新的500条记录
+      const newIndex = index.slice(0, 500);
+      // 需要删除的邮件ID
+      const emailsToDelete = index.slice(500).map(email => email.id);
+      
+      // 批量删除旧邮件
+      await Promise.all(emailsToDelete.map(async (emailId) => {
+        await env.EMAILS.delete(`email:${emailId}`);
+        console.log(`[${requestId}] 删除旧邮件: ${emailId}`);
+      }));
+
+      // 更新索引
+      await env.EMAILS.put(indexKey, JSON.stringify(newIndex));
+      console.log(`[${requestId}] 邮件索引清理完成，当前数量: ${newIndex.length}`);
+    }
+
     const result = await emailService.listEmails(env.EMAILS, page, pageSize);
     
     return new Response(
@@ -67,8 +89,6 @@ export async function handleListEmails(
     throw error;
   }
 }
-
-
 
 // 添加新的处理函数
 export async function handleSendEmail(
