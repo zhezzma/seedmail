@@ -4,36 +4,13 @@ import { CreateEmailResponse, Resend } from 'resend';
 
 // 关键常量定义
 const EMAIL_INDEX_KEY = 'email_index';
-const EMAIL_INDEX_LOCK = 'email_index_lock';
-const LOCK_TTL = 5000; // 锁定时间 5 秒
 const RECIPIENTS_KEY = 'all_recipients';
+// 新增事务版本号key常量
+const EMAIL_INDEX_VERSION = 'email_index_version';
 
 // 工具函数 - 生成 email 存储 key
 function getEmailKey(emailId: string): string {
   return `email:${emailId}`;
-}
-
-async function acquireLock(
-  kv: KVNamespace,
-  lockKey: string,
-  requestId: string
-): Promise<boolean> {
-  const now = Date.now();
-  const lockValue = JSON.stringify({ requestId, timestamp: now });
-
-  try {
-    await kv.put(lockKey, lockValue, { expirationTtl: LOCK_TTL / 1000 });
-    return true;
-  } catch {
-    return false;
-  }
-}
-
-async function releaseLock(
-  kv: KVNamespace,
-  lockKey: string
-): Promise<void> {
-  await kv.delete(lockKey);
 }
 
 export async function updateEmailIndex(
@@ -41,39 +18,71 @@ export async function updateEmailIndex(
   emailMeta: EmailMeta,
   requestId: string
 ): Promise<void> {
+  // 验证输入数据
+  if (!emailMeta || !emailMeta.id) {
+    throw new Error('无效的邮件元数据');
+  }
+
   const maxRetries = 5;
   let retryCount = 0;
-
+  
   while (retryCount < maxRetries) {
     try {
-      // 尝试获取锁
-      const locked = await acquireLock(kv, EMAIL_INDEX_LOCK, requestId);
-      if (!locked) {
-        throw new Error('Failed to acquire lock');
+      // 获取当前版本号和索引数据
+      const [version, currentIndex] = await Promise.all([
+        kv.get(EMAIL_INDEX_VERSION),
+        kv.get(EMAIL_INDEX_KEY, 'json') as Promise<EmailMeta[]>
+      ]);
+      
+      const currentVersion = version || '0';
+      const indexData = Array.isArray(currentIndex) ? currentIndex : [];
+      
+      // 检查是否已存在相同ID的邮件
+      if (indexData.some(item => item.id === emailMeta.id)) {
+        console.log(`[${requestId}] 邮件ID已存在，跳过更新: ${emailMeta.id}`);
+        return;
       }
-
+      
+      // 准备新数据
+      const newIndex = [emailMeta, ...indexData];
+      const newVersion = (parseInt(currentVersion) + 1).toString();
+      
+      // 使用事务操作确保原子性
       try {
-        // 获取并更新索引
-        const currentIndex = await kv.get(EMAIL_INDEX_KEY, 'json') as EmailMeta[] || [];
-        const newIndex = [emailMeta, ...currentIndex];
-        await kv.put(EMAIL_INDEX_KEY, JSON.stringify(newIndex));
+        // 重新获取版本号验证是否发生变化
+        const checkVersion = await kv.get(EMAIL_INDEX_VERSION);
+        
+        if (checkVersion !== currentVersion) {
+          throw new Error('版本号已变化');
+        }
+
+        await Promise.all([
+          kv.put(EMAIL_INDEX_KEY, JSON.stringify(newIndex)),
+          kv.put(EMAIL_INDEX_VERSION, newVersion)
+        ]);
 
         console.log(`[${requestId}] 邮件索引更新成功`);
         return;
-      } finally {
-        // 确保释放锁
-        await releaseLock(kv, EMAIL_INDEX_LOCK);
+      } catch (transactionError) {
+        console.log(`[${requestId}] 事务失败，准备重试`);
+        throw transactionError; // 抛出错误以触发重试
       }
+
     } catch (error) {
       retryCount++;
+      console.error(`[${requestId}] 更新出错 (${retryCount}/${maxRetries}):`, error);
+      
       if (retryCount === maxRetries) {
-        console.error(`[${requestId}] 邮件索引更新失败，已达到最大重试次数`);
-        throw new Error('Failed to update email index after maximum retries');
+        throw new Error(`邮件索引更新失败: ${error.message}`);
       }
-      console.log(`[${requestId}] 邮件索引更新冲突，准备重试 (${retryCount}/${maxRetries})`);
-      await new Promise(resolve => setTimeout(resolve, Math.random() * 100));
+      
+      // 使用指数退避策略
+      const delay = Math.min(100 * Math.pow(2, retryCount), 2000);
+      await new Promise(resolve => setTimeout(resolve, delay));
     }
   }
+
+  throw new Error('邮件索引更新失败: 已达到最大重试次数');
 }
 
 async function updateRecipientsList(

@@ -1,1 +1,1 @@
-{"root":["./src/main.ts","./src/vite-env.d.ts","./src/router/index.ts","./src/services/emailapi.ts","./src/types/email.ts","./src/app.vue","./src/views/composeemail.vue","./src/views/emaildetail.vue","./src/views/emaillist.vue","./src/views/login.vue"],"version":"5.6.3"}
+{"root":["./src/main.ts","./src/vite-env.d.ts","./src/router/index.ts","./src/services/emailapi.ts","./src/types/email.ts","./src/app.vue","./src/views/composeemail.vue","./src/views/emaildetail.vue","./src/views/emaillist.vue","./src/views/login.vue","./src/views/recipients.vue"],"version":"5.6.3"}
