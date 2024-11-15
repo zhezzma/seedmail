@@ -73,7 +73,19 @@ export async function handleListEmails(
     
     return new Response(
       JSON.stringify({
-        emails: result.emails,
+        emails: result.emails.map((email)=>{
+          return {
+            id: email.id,
+            from: email.from,
+            to: email.to,
+            subject: email.subject,
+            receivedAt: email.receivedAt,
+            spfStatus: email.spfStatus,
+            dmarcStatus: email.dmarcStatus,
+            dkimStatus: email.dkimStatus,
+            sendStatus: email.sendStatus,
+          };
+        }),
         total: result.total,
         page,
         pageSize,

@@ -5,8 +5,6 @@ import { emailApi } from '../services/emailApi';
 
 interface Recipient {
   email: string;
-  count: number;
-  lastReceived: string;
 }
 
 const loading = ref(false);
@@ -19,15 +17,6 @@ const pagination = ref({
 
 const columns = ref([
   { colKey: 'email', title: '邮箱地址', width: 300 },
-  { colKey: 'count', title: '收件次数', width: 150 },
-  {
-    colKey: 'lastReceived',
-    title: '最后收件时间',
-    width: 200,
-    cell: (h: any, { row }: { row: Recipient }) => {
-      return new Date(row.lastReceived).toLocaleString();
-    }
-  }
 ]);
 
 const fetchRecipients = async (paginationInfo: PaginationProps) => {
@@ -35,7 +24,11 @@ const fetchRecipients = async (paginationInfo: PaginationProps) => {
     loading.value = true;
     const { current, pageSize } = paginationInfo;
     const response = await emailApi.listRecipients(current, pageSize);
-    recipients.value = response.recipients;
+    recipients.value = response.recipients.map((x:string)=>{
+      return {
+        email: x
+      };
+    });
     pagination.value.total = response.total;
   } catch (error) {
     MessagePlugin.error('获取收件人列表失败');
