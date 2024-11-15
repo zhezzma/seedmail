@@ -134,7 +134,7 @@ onMounted(fetchEmailDetail);
         <template #icon>
           <t-icon name="arrow-left" />
         </template>
-        返回列表
+        返回
       </t-button>
 
       <h1 class="text-2xl font-bold ml-4 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
@@ -204,7 +204,7 @@ onMounted(fetchEmailDetail);
           <div class="flex justify-end">
             <t-button theme="primary" @click="handleReply" class="ml-4">
               <template #icon>
-                <t-icon name="reply" />
+                <t-icon name="chat-bubble" />
               </template>
               回复
             </t-button>

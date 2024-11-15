@@ -1,7 +1,7 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router';
+import { useRoute, useRouter } from 'vue-router';
 import logo from './assets/logo.png'
-
+const router = useRouter();
 const route = useRoute();
 const menu = [
   {
@@ -15,10 +15,18 @@ const menu = [
     icon: 'edit'
   }
 ];
+
+const logout = () => {
+  window.localStorage.removeItem('isAuthenticated');
+  router.push('/login');
+};
 </script>
 
 <template>
-  <t-layout class="h-screen">
+  <template v-if="route.path === '/login'">
+    <router-view />
+  </template>
+  <t-layout v-else class="h-screen">
     <!-- 侧边栏 -->
     <t-aside class="bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800">
       <t-menu :value="route.path" theme="dark" class="bg-transparent">
@@ -28,13 +36,8 @@ const menu = [
             <h1 class="text-xl font-bold text-white">SEED MAIL</h1>
           </div>
         </template>
-        <t-menu-item 
-          v-for="item in menu" 
-          :key="item.path" 
-          :value="item.path" 
-          :to="item.path"
-          class="menu-item mx-2 my-1 rounded-lg"
-        >
+        <t-menu-item v-for="item in menu" :key="item.path" :value="item.path" :to="item.path"
+          class="menu-item mx-2 my-1 rounded-lg">
           <template #icon>
             <t-icon :name="item.icon" />
           </template>
@@ -45,11 +48,12 @@ const menu = [
 
     <t-layout>
       <!-- 头部 -->
-      <!-- <t-header class="backdrop-blur-sm bg-white/80 border-b">
-        <div class="flex items-center h-16 px-6">
+      <t-header class="backdrop-blur-sm bg-white/80 border-b">
+        <div class="flex items-center justify-between h-16 px-6">
           <h1 class="text-xl font-semibold text-gray-800">邮件管理系统</h1>
+          <t-button theme="danger" variant="text" @click="logout">退出登录</t-button>
         </div>
-      </t-header> -->
+      </t-header>
 
       <!-- 内容区 -->
       <t-content class="bg-gray-50">

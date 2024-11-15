@@ -71,7 +71,7 @@ const placeholderText = `
         <template #icon>
           <t-icon name="arrow-left" />
         </template>
-        返回列表
+        返回
       </t-button>
       <h1 class="text-2xl font-bold ml-4 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
         写邮件
@@ -186,11 +186,5 @@ const placeholderText = `
 
 
 
-:deep(.t-icon) {
-  @apply text-gray-400;
-}
 
-:deep(.t-is-focused) .t-icon {
-  @apply text-blue-500;
-}
 </style>
