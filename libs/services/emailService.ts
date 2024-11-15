@@ -2,17 +2,32 @@ import { KVNamespace } from '@cloudflare/workers-types';
 import { EmailRecord, EmailMeta, EmailSendRequest } from '../types/email';
 import { CreateEmailResponse, Resend } from 'resend';
 
-// 关键常量定义
+/**
+ * 关键常量定义
+ * EMAIL_INDEX_KEY: 存储所有邮件索引的键
+ * RECIPIENTS_KEY: 存储所有收件人列表的键
+ * EMAIL_INDEX_VERSION: 邮件索引版本号的键，用于并发控制
+ */
 const EMAIL_INDEX_KEY = 'email_index';
 const RECIPIENTS_KEY = 'all_recipients';
-// 新增事务版本号key常量
 const EMAIL_INDEX_VERSION = 'email_index_version';
 
-// 工具函数 - 生成 email 存储 key
+/**
+ * 生成邮件存储的键名
+ * @param emailId 邮件ID
+ * @returns 格式化的键名
+ */
 function getEmailKey(emailId: string): string {
   return `email:${emailId}`;
 }
 
+/**
+ * 更新邮件索引
+ * 使用乐观锁机制确保并发安全
+ * @param kv KV存储实例
+ * @param emailMeta 邮件元数据
+ * @param requestId 请求ID，用于日志追踪
+ */
 export async function updateEmailIndex(
   kv: KVNamespace,
   emailMeta: EmailMeta,
@@ -49,7 +64,7 @@ export async function updateEmailIndex(
       
       // 使用事务操作确保原子性
       try {
-        // 重新获取版本号验证是否发生变化
+        // 重新获取版本��验证是否发生变化
         const checkVersion = await kv.get(EMAIL_INDEX_VERSION);
         
         if (checkVersion !== currentVersion) {
@@ -70,10 +85,11 @@ export async function updateEmailIndex(
 
     } catch (error) {
       retryCount++;
-      console.error(`[${requestId}] 更新出错 (${retryCount}/${maxRetries}):`, error);
+      const errorMessage = error instanceof Error ? error.message : '未知错误';
+      console.error(`[${requestId}] 更新出错 (${retryCount}/${maxRetries}):`, errorMessage);
       
       if (retryCount === maxRetries) {
-        throw new Error(`邮件索引更新失败: ${error.message}`);
+        throw new Error(`邮件索引更新失败: ${errorMessage}`);
       }
       
       // 使用指数退避策略
@@ -85,6 +101,13 @@ export async function updateEmailIndex(
   throw new Error('邮件索引更新失败: 已达到最大重试次数');
 }
 
+/**
+ * 更新收件人列表
+ * 如果收件人不存在则添加到列表中
+ * @param kv KV存储实例
+ * @param email 收件人邮箱
+ * @param requestId 请求ID
+ */
 async function updateRecipientsList(
   kv: KVNamespace,
   email: string,
@@ -98,6 +121,13 @@ async function updateRecipientsList(
   }
 }
 
+/**
+ * 存储邮件记录
+ * 包括存储完整邮件内容、更新索引和收件人列表
+ * @param kv KV存储实例
+ * @param email 完整的邮件记录
+ * @param requestId 请求ID
+ */
 export async function storeEmail(
   kv: KVNamespace,
   email: EmailRecord,
@@ -119,6 +149,12 @@ export async function storeEmail(
   await updateEmailIndex(kv, emailMeta, requestId);
 }
 
+/**
+ * 根据ID获取邮件内容
+ * @param kv KV存储实例
+ * @param emailId 邮件ID
+ * @returns 邮件记录或null
+ */
 export async function getEmailById(
   kv: KVNamespace,
   emailId: string
@@ -126,6 +162,12 @@ export async function getEmailById(
   return kv.get(getEmailKey(emailId), 'json');
 }
 
+/**
+ * 删除指定邮件
+ * 同时更新邮件索引
+ * @param kv KV存储实例
+ * @param emailId 要删除的邮件ID
+ */
 export async function deleteEmail(
   kv: KVNamespace,
   emailId: string
@@ -137,6 +179,13 @@ export async function deleteEmail(
   await kv.put(EMAIL_INDEX_KEY, JSON.stringify(newIndex));
 }
 
+/**
+ * 分页获取邮件列表
+ * @param kv KV存储实例
+ * @param page 页码
+ * @param pageSize 每页数量
+ * @returns 分页后的邮件列表及分页信息
+ */
 export async function listEmails(
   kv: KVNamespace,
   page: number,
@@ -159,6 +208,13 @@ export async function listEmails(
   };
 }
 
+/**
+ * 清理过期邮件
+ * 当邮件数量超过限制时，删除最旧的邮件
+ * @param kv KV存储实例
+ * @param requestId 请求ID
+ * @param maxEmails 最大保留邮件数，默认500
+ */
 export async function cleanupOldEmails(
   kv: KVNamespace,
   requestId: string,
@@ -181,7 +237,14 @@ export async function cleanupOldEmails(
   }
 }
 
-// 添加发送邮件的服务方法
+/**
+ * 发送邮件
+ * 使用Resend服务发送邮件
+ * @param resendKey Resend API密钥
+ * @param emailData 要发送的邮件数据
+ * @param requestId 请求ID
+ * @returns 发送响应结果
+ */
 export async function sendEmail(
   resendKey: string,
   emailData: EmailSendRequest,
@@ -208,6 +271,13 @@ export async function sendEmail(
   }
 }
 
+/**
+ * 分页获取收件人列表
+ * @param kv KV存储实例
+ * @param page 页码
+ * @param pageSize 每页数量
+ * @returns 分页后的收件人列表及分页信息
+ */
 export async function listRecipients(
   kv: KVNamespace,
   page: number,

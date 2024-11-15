@@ -1,55 +1,65 @@
 import { KVNamespace } from '@cloudflare/workers-types'
 
+/**
+ * 邮件记录的完整信息
+ */
 export interface EmailRecord {
-    id: string;
-    from: string;
-    to: string;
-    subject: string;
-    receivedAt: string;
-    spfStatus: string;
-    dmarcStatus: string;
-    dkimStatus: string;
-    sendStatus: 'pending' | 'sent' | 'failed';
-    content: string;
-    headers: Record<string, string>;
-    size: number;
-    rawEmail: string;
-    attachments: string[];
-  }
+    id: string;            // 邮件唯一标识符
+    from: string;          // 发件人
+    to: string;           // 收件人
+    subject: string;      // 邮件主题
+    receivedAt: string;   // 接收时间
+    spfStatus: string;    // SPF 验证状态
+    dmarcStatus: string;  // DMARC 验证状态
+    dkimStatus: string;   // DKIM 验证状态
+    sendStatus: 'pending' | 'sent' | 'failed';  // 发送状态
+    content: string;      // 邮件内容
+    headers: Record<string, string>;  // 邮件头信息
+    size: number;         // 邮件大小
+    rawEmail: string;     // 原始邮件内容
+    attachments: string[]; // 附件列表
+}
 
-  
-  export interface EmailMeta {
+/**
+ * 邮件基础信息
+ */
+export interface EmailMeta {
     id: string;
     from: string;
     to: string;
     subject: string;
     receivedAt: string;
-  }
-  
-  export interface PaginatedResponse<T> {
+}
+
+/**
+ * 分页响应接口
+ */
+export interface PaginatedResponse<T> {
     data: T[];
     total: number;
     page: number;
     pageSize: number;
     totalPages: number;
-  }
-  
-
-
-  // 添加新的接口
-export interface EmailSendRequest {
-  from: string;
-  to: string;
-  subject: string;
-  content: string;
 }
 
-// 在 Env 接口中添加 RESEND_KEY
+/**
+ * 发送邮件请求接口
+ */
+export interface EmailSendRequest {
+    from: string;
+    to: string;
+    subject: string;
+    content: string;
+}
+
+/**
+ * 环境变量配置接口
+ */
 export interface Env {
-  EMAILS: KVNamespace;
-  API_TOKEN: string;
-  JWT_SECRET: string;
-  RESEND_KEY: string;  // 新增
-  USER_NAME:string;
-  PASSWORD:string;
+    EMAILS: KVNamespace;  // KV 存储命名空间
+    API_TOKEN: string;    // API 访问令牌
+    JWT_SECRET: string;   // JWT 密钥
+    RESEND_KEY: string;   // Resend API 密钥
+    USER_NAME: string;    // 用户名
+    PASSWORD: string;     // 密码
 }

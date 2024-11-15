@@ -1,9 +1,17 @@
+/**
+ * 生成 JWT token
+ * @param username 用户名
+ * @param secret 密钥
+ * @returns 生成的 token 字符串
+ */
 export async function generateToken(username: string, secret: string): Promise<string> {
+    // JWT 头部信息
     const header = { alg: 'HS256', typ: 'JWT' };
+    // JWT 载荷信息
     const payload = {
       sub: username,
-      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60),
-      iat: Math.floor(Date.now() / 1000)
+      exp: Math.floor(Date.now() / 1000) + (24 * 60 * 60), // 24小时后过期
+      iat: Math.floor(Date.now() / 1000) // 签发时间
     };
   
     const encodedHeader = btoa(JSON.stringify(header));
@@ -14,9 +22,15 @@ export async function generateToken(username: string, secret: string): Promise<s
     );
   
     return `${encodedHeader}.${encodedPayload}.${signature}`;
-  }
-  
-  export async function verifyToken(request: Request, secret: string): Promise<boolean> {
+}
+
+/**
+ * 验证 JWT token
+ * @param request 请求对象
+ * @param secret 密钥
+ * @returns 验证是否通过
+ */
+export async function verifyToken(request: Request, secret: string): Promise<boolean> {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) {
       return false;
@@ -42,9 +56,15 @@ export async function generateToken(username: string, secret: string): Promise<s
       console.error('Token verification failed:', error);
       return false;
     }
-  }
-  
-  async function createHmacSignature(message: string, secret: string): Promise<string> {
+}
+
+/**
+ * 创建 HMAC 签名
+ * @param message 需要签名的消息
+ * @param secret 密钥
+ * @returns 签名字符串
+ */
+async function createHmacSignature(message: string, secret: string): Promise<string> {
     const encoder = new TextEncoder();
     const keyData = encoder.encode(secret);
     const messageData = encoder.encode(message);
@@ -64,4 +84,4 @@ export async function generateToken(username: string, secret: string): Promise<s
     );
   
     return btoa(String.fromCharCode(...new Uint8Array(signature)));
-  }
+}

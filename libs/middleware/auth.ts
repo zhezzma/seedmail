@@ -1,6 +1,13 @@
 import { Env } from '../types/email';
 import { verifyToken } from '../utils/jwt';
 
+/**
+ * 认证中间件
+ * @param request 请求对象
+ * @param env 环境变量
+ * @param requestId 请求ID
+ * @returns 如果认证失败返回错误响应，否则返回 null
+ */
 export async function authMiddleware(
   request: Request, 
   env: Env, 
