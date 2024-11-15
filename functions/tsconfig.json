@@ -1,0 +1,14 @@
+{
+    "compilerOptions": {
+      "target": "ESNext",
+      "module": "ESNext",
+      "moduleResolution": "node",
+      "esModuleInterop": true,
+      "strict": true,
+      "lib": ["ESNext"],
+      "types": ["@cloudflare/workers-types"],
+      "outDir": "../dist",    // 输出到上级的 dist 目录
+      "rootDir": "../",       // 以上级目录为根
+    },
+    "include": ["./**/*.ts"],
+  }
