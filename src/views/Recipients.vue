@@ -2,7 +2,10 @@
 import { ref, onMounted } from 'vue';
 import { MessagePlugin, PaginationProps, TableProps } from 'tdesign-vue-next';
 import { emailApi } from '../services/emailApi';
-
+import { EmailRecord } from '../types/email';
+import { useRouter } from 'vue-router';
+import { h } from 'vue';
+import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';
 interface Recipient {
   email: string;
 }
@@ -17,21 +20,51 @@ const pagination = ref({
 
 const columns = ref([
   { colKey: 'email', title: '邮箱地址', width: 300 },
+  {
+    colKey: 'operation',
+    title: '操作',
+    width: 120,
+    cell: (d: any, { row }: { row: Recipient }) => {
+      return h(TSpace, {}, {
+        default: () => [
+          h(TButton, {
+            theme: 'primary',
+            variant: 'text',
+            onClick: () => sendMail(row)
+          }, {
+            default: () => '写信'
+          })
+        ]
+      });
+    }
+  }
 ]);
+const router = useRouter();
+const sendMail = (row: Recipient) => {
+  router.push({
+    path: '/compose',
+    query: {
+      to: "",
+      from: row.email,
+      subject: ``,
+    }
+  });
+};
+
 
 const fetchRecipients = async (paginationInfo: PaginationProps) => {
   try {
     loading.value = true;
     const { current, pageSize } = paginationInfo;
     const response = await emailApi.listRecipients(current, pageSize);
-    recipients.value = response.recipients.map((x:string)=>{
+    recipients.value = response.recipients.map((x: string) => {
       return {
         email: x
       };
     });
     pagination.value.total = response.total;
   } catch (error) {
-    MessagePlugin.error('获取收件人列表失败');
+    MessagePlugin.error('获取邮箱列表失败');
     recipients.value = [];
   } finally {
     loading.value = false;
@@ -56,27 +89,17 @@ onMounted(async () => {
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        收件人列表
+        邮箱列表
       </h1>
     </div>
 
     <t-card class="shadow-md rounded-xl overflow-hidden">
-      <t-table 
-        :data="recipients" 
-        :columns="columns" 
-        :loading="loading" 
-        :pagination="pagination" 
-        row-key="email" 
-        hover 
-        stripe 
-        lazy-load 
-        @page-change="onPageChange"
-        class="recipients-table"
-      >
+      <t-table :data="recipients" :columns="columns" :loading="loading" :pagination="pagination" row-key="email" hover
+        stripe lazy-load @page-change="onPageChange" class="recipients-table">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-12 text-gray-500">
             <t-icon name="user-circle" size="48px" class="mb-4 text-gray-300" />
-            <p>暂无收件人记录</p>
+            <p>暂无邮箱记录</p>
           </div>
         </template>
       </t-table>

@@ -15,7 +15,7 @@ const menu = [
     icon: 'edit'
   },
   {
-    name: '收件人列表',
+    name: '邮箱列表',
     path: '/recipients',
     icon: 'user-circle'
   }
