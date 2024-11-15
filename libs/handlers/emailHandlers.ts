@@ -1,4 +1,4 @@
-import { EmailMeta, EmailRecord, EmailSendRequest, Env } from '../types/email';
+import { EmailRecord, EmailSendRequest, Env } from '../types/email';
 import * as emailService from '../services/emailService';
 
 /**
