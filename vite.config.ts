@@ -18,6 +18,15 @@ export default defineConfig({
         library: 'vue-next'
       })],
     }),
-  
   ],
+  server: {
+    proxy: {
+      '/api': {
+        //Vite 的开发服务器接收到请求，发现请求路径以 /api 开头时，Vite 的开发服务器就会自动转发到 http://localhost:8788
+        //这样就可以在开发时，通过 /api 来访问后端服务
+        target: 'http://127.0.0.1:8788',
+        changeOrigin: true
+      }
+    }
+  }
 })
