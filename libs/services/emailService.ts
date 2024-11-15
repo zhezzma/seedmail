@@ -76,13 +76,20 @@ export async function listEmails(
   const list = await kv.list({ prefix: EMAIL_PREFIX });
   const total = list.keys.length;
   
+  // 获取所有邮件
+  const allEmails = await Promise.all(
+    list.keys.map(key => kv.get(key.name, 'json'))
+  ) as EmailRecord[];
+
+  // 按接收时间降序排序
+  allEmails.sort((a, b) => {
+    return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
+  });
+  
+  // 分页处理
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
-  const pageKeys = list.keys.slice(start, end);
-  
-  const emails = await Promise.all(
-    pageKeys.map(key => kv.get(key.name, 'json'))
-  ) as EmailRecord[];
+  const emails = allEmails.slice(start, end);
 
   return {
     emails,
