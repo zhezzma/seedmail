@@ -94,7 +94,7 @@ const toggleMenu = () => {
     <t-layout class="w-full">
       <!-- 修改后的头部 -->
       <t-header class="header backdrop-blur-xl border-b border-gray-100">
-        <div class="flex items-center justify-between h-16 px-4 lg:px-8">
+        <div class="flex items-center justify-between h-full  px-4 lg:px-8">
           <!-- 移动端菜单按钮 -->
           <div class="flex items-center gap-4">
             <t-button
