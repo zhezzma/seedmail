@@ -83,7 +83,6 @@ export async function handleListEmails(
             spfStatus: email.spfStatus,
             dmarcStatus: email.dmarcStatus,
             dkimStatus: email.dkimStatus,
-            sendStatus: email.sendStatus,
           };
         }),
         total: result.total,

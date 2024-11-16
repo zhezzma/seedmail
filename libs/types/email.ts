@@ -12,12 +12,9 @@ export interface EmailRecord {
     spfStatus: string;    // SPF 验证状态
     dmarcStatus: string;  // DMARC 验证状态
     dkimStatus: string;   // DKIM 验证状态
-    sendStatus: 'pending' | 'sent' | 'failed';  // 发送状态
-    content: string;      // 邮件内容
     headers: Record<string, string>;  // 邮件头信息
     size: number;         // 邮件大小
     rawEmail: string;     // 原始邮件内容
-    attachments: string[]; // 附件列表
 }
 
 /**

@@ -6,68 +6,27 @@ import { emailApi } from '../services/emailApi';
 import type { EmailRecord } from '../types/email';
 import DOMPurify from 'dompurify';
 
+
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
 const email = ref<EmailRecord | null>(null);
 const displayMode = ref<'html' | 'text'>('html');
 
-// 处理邮件内容显示
+
+
+// 修改 processedContent 计算属性
 const processedContent = computed(() => {
-  if (!email.value?.content) return '';
+  if (!email.value) return '';
 
-  const content = email.value.content;
-
-  // 处理 quoted-printable 和 UTF-8 编码
-  const decodeQuotedPrintable = (text: string) => {
-    // 移除换行符和等号
-    const cleaned = text.replace(/=\r?\n/g, '');
-
-    // 收集所有字节
-    const bytes: number[] = [];
-    let i = 0;
-
-    while (i < cleaned.length) {
-      if (cleaned[i] === '=' && i + 2 < cleaned.length) {
-        // 处理十六进制编码
-        const hex = cleaned.substr(i + 1, 2);
-        bytes.push(parseInt(hex, 16));
-        i += 3;
-      } else {
-        // 处理普通字符
-        bytes.push(cleaned.charCodeAt(i));
-        i += 1;
-      }
-    }
-
-    // 使用 TextDecoder 进行 UTF-8 解码
-    const decoder = new TextDecoder('utf-8');
-    const decodedText = decoder.decode(new Uint8Array(bytes));
-
-    // 处理 HTML 实体
-    return decodedText
-      .replace(/</g, '<')
-      .replace(/>/g, '>')
-      .replace(/&/g, '&');
-  };
-
-  // 查找 quoted-printable 编码的内容
-  const quotedPrintableMatch = content.match(/Content-Type: text\/html;[\s\S]*?quoted-printable\s*([\s\S]*?)(?=-{2}|$)/);
-
-  if (quotedPrintableMatch && quotedPrintableMatch[1]) {
-    const decodedText = decodeQuotedPrintable(quotedPrintableMatch[1].trim());
-
-    if (displayMode.value === 'html') {
-      return DOMPurify.sanitize(decodedText, {
-        ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'img', 'div', 'span'],
-        ALLOWED_ATTR: ['href', 'src', 'alt', 'style', 'class'],
-      });
-    }
-
-    return decodedText.replace(/<[^>]*>/g, '');
+  if (displayMode.value === 'html' && email.value.html) {
+    return DOMPurify.sanitize(email.value.html, {
+      ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'ul', 'ol', 'li', 'a', 'img', 'div', 'span'],
+      ALLOWED_ATTR: ['href', 'src', 'alt', 'style', 'class'],
+    });
   }
 
-  return content;
+  return email.value.text || '';
 });
 
 const fetchEmailDetail = async () => {
@@ -75,8 +34,10 @@ const fetchEmailDetail = async () => {
   loading.value = true;
   try {
     email.value = await emailApi.getEmail(id);
+
   } catch (error) {
     MessagePlugin.error('获取邮件详情失败');
+    console.error('解析邮件失败:', error);
   } finally {
     loading.value = false;
   }

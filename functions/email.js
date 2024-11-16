@@ -8,18 +8,15 @@
  * @property {string} spfStatus - SPF验证状态
  * @property {string} dmarcStatus - DMARC验证状态
  * @property {string} dkimStatus - DKIM验证状态
- * @property {'pending'|'sent'|'failed'} sendStatus - 发送状态
- * @property {string} content - 邮件内容
  * @property {Object.<string, string>} headers - 邮件头信息
  * @property {number} size - 邮件大小(字节)
- * @property {string} rawEmail - 原始邮件内容
- * @property {string[]} attachments - 附件列表
+ * @property {string} rawEmail - 原始邮件内容 base64 编码
  */
 
 /**
  * 邮件处理主函数
  * 处理传入的邮件消息，包括保存记录和转发功能
- * 
+ * 解析const binaryData = Uint8Array.from(atob(emailData.rawEmail), c => c.charCodeAt(0));
  * @param {ForwardableEmailMessage} message - Cloudflare Email消息对象
  * @param {Object} env - 环境变量对象
  * @param {KVNamespace} env.EMAILS - Cloudflare KV存储实例
@@ -29,9 +26,12 @@
  */
 export async function emailHandler(message, env, ctx) {
   try {
-    // 获取原始邮件内容
-    const content = await new Response(message.raw).text();
-    
+    // 获取原始邮件内容并转换为 base64
+    const rawArray = await new Response(message.raw).arrayBuffer();
+    const rawBase64 = btoa(
+      String.fromCharCode(...new Uint8Array(rawArray))
+    );
+
     // 生成唯一ID和时间戳
     const emailId = crypto.randomUUID();
     const timestamp = new Date().toISOString();
@@ -47,12 +47,9 @@ export async function emailHandler(message, env, ctx) {
       spfStatus: message.headers.get('authentication-results-spf') || 'unknown',
       dmarcStatus: message.headers.get('authentication-results-dmarc') || 'unknown',
       dkimStatus: message.headers.get('authentication-results-dkim') || 'unknown',
-      sendStatus: 'pending',
-      content: content,
       headers: Object.fromEntries(message.headers.entries()),
       size: message.rawSize,
-      rawEmail: content,
-      attachments: await extractAttachments(message)
+      rawEmail: rawBase64, // base64 编码的原始邮件内容
     };
 
     // 存储邮件数据到 KV
@@ -61,20 +58,20 @@ export async function emailHandler(message, env, ctx) {
     // 转发邮件
     await forwardMail(message);
 
-    return new Response('Email processed successfully', { 
+    return new Response('Email processed successfully', {
       status: 200,
       headers: { 'Content-Type': 'application/json' }
     });
   } catch (error) {
     console.error('Error processing email:', error);
     // 发生错误时仍尝试转发邮件
-    await forwardMail(message).catch(err => 
+    await forwardMail(message).catch(err =>
       console.error('Forward failed after error:', err)
     );
     return new Response(JSON.stringify({
       error: 'Internal server error',
       message: error.message
-    }), { 
+    }), {
       status: 500,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -93,17 +90,6 @@ async function forwardMail(message) {
     console.error('Failed to forward email:', error);
     throw error;
   }
-}
-
-/**
- * 从邮件消息中提取附件信息
- * @param {ForwardableEmailMessage} message - Cloudflare Email消息对象
- * @returns {Promise<string[]>} 附件名称列表
- */
-async function extractAttachments(message) {
-  const attachments = [];
-  // TODO: 实现附件提取逻辑
-  return attachments;
 }
 
 /**
