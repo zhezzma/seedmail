@@ -66,6 +66,9 @@ const fetchEmails = async (paginationInfo: PaginationProps) => {
     const response = await emailApi.listEmails(current, pageSize);
     emails.value = response.emails;
     pagination.value.total = response.total;
+    if(pagination.value.current>Math.ceil(response.total/pagination.value.pageSize)){
+      pagination.value.current = Math.ceil(response.total/pagination.value.pageSize);
+    }
   } catch (error) {
     MessagePlugin.error('获取邮件列表失败');
     emails.value = []
