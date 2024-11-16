@@ -17,6 +17,7 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
     const request = context.request;
     const env = context.env as Env;
 
+    console.log('环境变量:', env);
 
     const requestId = crypto.randomUUID();
     console.log(`[${requestId}] 开始处理请求: ${request.method} ${request.url}`);
