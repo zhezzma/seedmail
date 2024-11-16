@@ -106,7 +106,7 @@ const toggleMenu = () => {
               <t-icon name="menu" size="24px" />
             </t-button>
             <h1 class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-              邮件管理系统
+             
             </h1>
           </div>
           <t-button
@@ -132,7 +132,7 @@ const toggleMenu = () => {
 
       <!-- 页脚 -->
       <t-footer class="footer backdrop-blur-sm py-4 text-center text-sm text-gray-600">
-        <span class="opacity-75">© 2024 邮件管理系统</span>
+        <span class="opacity-75">© SEED MAIL 邮件管理系统</span>
       </t-footer>
     </t-layout>
   </t-layout>
