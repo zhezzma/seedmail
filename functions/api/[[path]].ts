@@ -10,8 +10,8 @@ import {
     handleListRecipients
 } from '../../libs/handlers/emailHandlers';
 import * as emailService from '../../libs/services/emailService';
-import { Attachment, simpleParser } from 'mailparser';
-
+import PostalMime from 'postal-mime';
+import { Buffer } from 'node:buffer';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
 
     const request = context.request;
@@ -73,7 +73,7 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
                     // 使用解构赋值和 rest 操作符来分离 rawEmail
                     const { rawEmail, ...emailData } = email;
                     const binaryData = Buffer.from(rawEmail, 'base64');//Uint8Array.from(atob(rawEmail), c => c.charCodeAt(0));
-                    const parsed = await simpleParser(binaryData);
+                    const parsed = await PostalMime.parse(binaryData);
                     const result = { ...emailData, ...parsed };
                     response = new Response(
                         JSON.stringify(result),
