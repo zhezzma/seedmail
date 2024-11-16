@@ -15,14 +15,14 @@ const loading = ref(false);
 const emails = ref<EmailRecord[]>([]);
 const pagination = ref({
   total: 100,
-  current:1,
-  pageSize:10
+  current: 1,
+  pageSize: 10
 });
 
 const columns = ref([
   { colKey: 'from', title: '发件人', width: 150 },
   { colKey: 'to', title: '收件人', width: 150 },
-  { colKey: 'subject', title: '主题',    width: 300 },
+  { colKey: 'subject', title: '主题', width: 300 },
   {
     colKey: 'receivedAt',
     title: '接收时间',
@@ -66,9 +66,6 @@ const fetchEmails = async (paginationInfo: PaginationProps) => {
     const response = await emailApi.listEmails(current, pageSize);
     emails.value = response.emails;
     pagination.value.total = response.total;
-    if(pagination.value.current>Math.ceil(response.total/pagination.value.pageSize)){
-      pagination.value.current = Math.ceil(response.total/pagination.value.pageSize);
-    }
   } catch (error) {
     MessagePlugin.error('获取邮件列表失败');
     emails.value = []
@@ -84,11 +81,20 @@ const handleView = (id: string) => {
 
 const handleDelete = async (id: string) => {
   try {
-
-
     await emailApi.deleteEmail(id);
     MessagePlugin.success('删除成功');
-    fetchEmails({
+    
+    // 计算删除后的总数
+    const newTotal = pagination.value.total - 1;
+    // 计算最大页码
+    const maxPage = Math.ceil(newTotal / pagination.value.pageSize);
+    
+    // 如果当前页大于最大页码，说明需要跳转到上一页
+    if (pagination.value.current > maxPage) {
+      pagination.value.current = Math.max(1, pagination.value.current - 1);
+    }
+    
+    await fetchEmails({
       current: pagination.value.current,
       pageSize: pagination.value.pageSize,
     });
@@ -131,18 +137,8 @@ onMounted(async () => {
     </div>
 
     <t-card class="shadow-md rounded-xl overflow-hidden">
-      <t-table 
-        :data="emails" 
-        :columns="columns" 
-        :loading="loading" 
-        :pagination="pagination" 
-        row-key="id" 
-        hover 
-        stripe 
-        lazy-load 
-        @page-change="onPageChange"
-        class="email-table"
-      >
+      <t-table :data="emails" :columns="columns" :loading="loading" :pagination="pagination" row-key="id" hover stripe
+        lazy-load @page-change="onPageChange" class="email-table">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-12 text-gray-500">
             <t-icon name="mail" size="48px" class="mb-4 text-gray-300" />
