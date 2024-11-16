@@ -74,12 +74,14 @@ export async function listEmails(
   totalPages: number;
 }> {
   const list = await kv.list({ prefix: EMAIL_PREFIX });
-  const total = list.keys.length;
   
-  // 获取所有邮件
-  const allEmails = await Promise.all(
+  // 获取所有邮件并过滤掉null值
+  const allEmails = (await Promise.all(
     list.keys.map(key => kv.get(key.name, 'json'))
-  ) as EmailRecord[];
+  )).filter((email): email is EmailRecord => email !== null);
+
+  // 更新total为实际存在的邮件数量
+  const total = allEmails.length;
 
   // 按接收时间降序排序
   allEmails.sort((a, b) => {
