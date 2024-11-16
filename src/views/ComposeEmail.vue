@@ -133,7 +133,7 @@ const placeholderText = `
           <t-textarea
             v-model="formData.content"
             :placeholder="placeholderText"
-            :autosize="{ minRows: 12 }"
+            :autosize="{ minRows: 8 }"
             class="email-content-editor hover:border-blue-300 focus:border-blue-500 transition-colors"
           />
         </t-form-item>

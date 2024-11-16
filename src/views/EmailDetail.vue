@@ -107,7 +107,7 @@ onMounted(fetchEmailDetail);
     <!-- 主要内容卡片 -->
     <t-card :loading="loading" class="shadow-lg rounded-xl overflow-hidden">
       <template v-if="email">
-        <div class="space-y-8">
+        <div class="space-y-5">
           <!-- 邮件信息网格 -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6 bg-gray-50 p-6 rounded-lg">
             <div v-for="item in headerInfo" :key="item.label" class="flex items-start space-x-3">
@@ -119,21 +119,19 @@ onMounted(fetchEmailDetail);
             </div>
           </div>
 
-          <!-- 显示模式切换 -->
-          <div class="flex justify-end">
-            <t-button size="small" variant="outline" @click="toggleDisplayMode" class="hover:bg-blue-50">
-              <template #icon>
-                <t-icon :name="displayMode === 'html' ? 'code' : 'view-module'" />
-              </template>
-              切换到{{ displayMode === 'html' ? '纯文本' : 'HTML' }}模式
-            </t-button>
-          </div>
-
           <!-- 邮件内容 -->
           <div class="email-content-wrapper">
-            <div class="flex items-center space-x-2 mb-3">
-              <t-icon name="file" class="text-blue-600" />
-              <div class="text-gray-600 font-medium">邮件正文</div>
+            <div class="flex justify-between mb-3">
+              <div class=" flex items-center space-x-2 ">
+                <t-icon name="file" class="text-blue-600" />
+                <div class="text-gray-600 font-medium">邮件正文</div>
+              </div>
+              <t-button size="small" variant="outline" @click="toggleDisplayMode" class="hover:bg-blue-50">
+                <template #icon>
+                  <t-icon :name="displayMode === 'html' ? 'code' : 'view-module'" />
+                </template>
+                切换到{{ displayMode === 'html' ? '纯文本' : 'HTML' }}模式
+              </t-button>
             </div>
             <div :class="[
               'email-content',
