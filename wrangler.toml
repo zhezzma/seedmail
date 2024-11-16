@@ -7,14 +7,14 @@ pages_build_output_dir = "dist"
 
 # 预览环境配置
 [env.preview]
-vars = {}  # 不要在这里写入实际值
+vars = {}  # 不要在这里写入实际值 写在.dev.vars
 kv_namespaces = [
   { binding = "EMAILS", id = "b7b8e7fb4eab40eabd3dcb1c1feea2cf" }
 ]
 
 # 生产环境配置
 [env.production]
-vars = {}  # 不要在这里写入实际值
+vars = {}  # 不要在这里写入实际值 设置在网站上 
 kv_namespaces = [
   { binding = "EMAILS", id = "b7b8e7fb4eab40eabd3dcb1c1feea2cf" }
 ]
