@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { useRoute, useRouter } from 'vue-router';
+import { ref } from 'vue';
 import logo from './assets/logo.png'
+
 const router = useRouter();
 const route = useRoute();
+const menuVisible = ref(false);
 const menu = [
   {
     name: '邮件列表',
@@ -25,6 +28,10 @@ const logout = () => {
   window.localStorage.removeItem('isAuthenticated');
   router.push('/login');
 };
+
+const toggleMenu = () => {
+  menuVisible.value = !menuVisible.value;
+};
 </script>
 
 <template>
@@ -32,8 +39,41 @@ const logout = () => {
     <router-view />
   </template>
   <t-layout v-else class="h-screen">
-    <!-- 侧边栏 -->
-    <t-aside class="sidebar backdrop-blur-lg">
+    <!-- 移动端抽屉菜单 -->
+    <t-drawer
+      v-model:visible="menuVisible"
+      placement="left"
+      :size="232"
+      :footer="false"
+      :header="false"
+      :close-on-overlay-click="true"
+      class="lg:hidden"
+    >
+      <t-menu :value="route.path" theme="dark" class="h-full bg-transparent ">
+        <template #logo>
+          <router-link to="/" class="flex items-center gap-2 p-4">
+            <img :src="logo" alt="logo" class="w-8 h-8" />
+            <h1 class="text-xl font-bold text-white">SEED MAIL</h1>
+          </router-link>
+        </template>
+        <t-menu-item
+          v-for="item in menu"
+          :key="item.path"
+          :value="item.path"
+          :to="item.path"
+          @click="menuVisible = false"
+          class="menu-item mx-4 my-2 rounded-xl"
+        >
+          <template #icon>
+            <t-icon :name="item.icon" />
+          </template>
+          {{ item.name }}
+        </t-menu-item>
+      </t-menu>
+    </t-drawer>
+
+    <!-- 桌面端侧边栏 -->
+    <t-aside class="sidebar backdrop-blur-lg hidden lg:block">
       <t-menu :value="route.path" theme="dark" class="bg-transparent">
         <template #logo>
           <router-link to="/" class="flex items-center gap-2">
@@ -51,21 +91,38 @@ const logout = () => {
       </t-menu>
     </t-aside>
 
-    <t-layout>
-      <!-- 头部 -->
+    <t-layout class="w-full">
+      <!-- 修改后的头部 -->
       <t-header class="header backdrop-blur-xl border-b border-gray-100">
-        <div class="flex items-center justify-between h-16 px-8">
-          <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-            邮件管理系统
-          </h1>
-          <t-button theme="danger" variant="text" hover-animation class="logout-btn" @click="logout">
-            <t-icon name="logout" class="mr-2" />退出登录
+        <div class="flex items-center justify-between h-16 px-4 lg:px-8">
+          <!-- 移动端菜单按钮 -->
+          <div class="flex items-center gap-4">
+            <t-button
+              theme="default"
+              variant="text"
+              class="lg:hidden"
+              @click="toggleMenu"
+            >
+              <t-icon name="menu" size="24px" />
+            </t-button>
+            <h1 class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              邮件管理系统
+            </h1>
+          </div>
+          <t-button
+            theme="danger"
+            variant="text"
+            @click="logout"
+            class="logout-btn"
+          >
+            <t-icon name="logout" class="mr-2" />
+            <span class="hidden sm:inline">退出登录</span>
           </t-button>
         </div>
       </t-header>
 
-      <!-- 内容区 -->
-      <t-content class="content bg-gray-50/30 flex-1 overflow-y-auto p-6">
+      <!-- 内容区域 -->
+      <t-content class="content bg-gray-50/30 flex-1  overflow-y-auto  p-4 lg:p-6 w-full">
         <router-view v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
             <component :is="Component" />
@@ -120,6 +177,14 @@ const logout = () => {
   @apply bg-transparent;
 } */
 
+:deep(.t-drawer__body){
+  @apply p-0;
+}
+
+:deep(.t-drawer__body){
+  @apply p-0;
+}
+
 :deep(::-webkit-scrollbar) {
   @apply w-2;
 }
@@ -140,5 +205,16 @@ const logout = () => {
 
 .footer {
   @apply bg-white/60;
+}
+
+/* 添加移动端响应式样式 */
+@media (max-width: 1024px) {
+  .sidebar {
+    display: none;
+  }
+}
+
+.drawer-menu {
+  @apply bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800;
 }
 </style>

@@ -64,18 +64,19 @@ const placeholderText = `
 `;
 </script>
 <template>
-  <div class=" p-6">
+  <div class="p-6">
     <!-- 头部导航 -->
-    <div class="flex items-center mb-8">
+    <div class="flex items-center justify-between mb-8">
+
+      <h1 class="text-2xl font-bold ml-4 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
+        写邮件
+      </h1>
       <t-button theme="default" variant="outline" @click="handleBack" class="hover:bg-gray-50">
         <template #icon>
           <t-icon name="arrow-left" />
         </template>
         返回
       </t-button>
-      <h1 class="text-2xl font-bold ml-4 bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        写邮件
-      </h1>
     </div>
 
     <!-- 邮件表单卡片 -->
@@ -85,6 +86,7 @@ const placeholderText = `
         :data="formData"
         :rules="rules"
         :colon="true"
+        label-align="top"
         @submit="handleSubmit"
       >
         <!-- 发件人输入框 -->
