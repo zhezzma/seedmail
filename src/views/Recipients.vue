@@ -2,7 +2,6 @@
 import { ref, onMounted } from 'vue';
 import { MessagePlugin, PaginationProps, TableProps } from 'tdesign-vue-next';
 import { emailApi } from '../services/emailApi';
-import { EmailRecord } from '../types/email';
 import { useRouter } from 'vue-router';
 import { h } from 'vue';
 import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';

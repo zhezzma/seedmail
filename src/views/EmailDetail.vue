@@ -3,14 +3,14 @@ import { ref, onMounted, computed } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { emailApi } from '../services/emailApi';
-import type { EmailRecord } from '../types/email';
+import type { Email } from '../types/email';
 import DOMPurify from 'dompurify';
 
 
 const route = useRoute();
 const router = useRouter();
 const loading = ref(false);
-const email = ref<EmailRecord | null>(null);
+const email = ref<Email | null>(null);
 const displayMode = ref<'html' | 'text'>('html');
 
 
@@ -55,8 +55,8 @@ const handleReply = () => {
   router.push({
     path: '/compose',
     query: {
-      to: email.value?.from,
-      from: email.value?.to,
+      to: email.value?.to?.[0]?.address,
+      from: email.value?.from.address,
       subject: ``,
     }
   });
@@ -65,12 +65,12 @@ const handleReply = () => {
 const headerInfo = computed(() => [
   {
     label: '发件人',
-    value: email.value?.from,
+    value: email.value?.from.address,
     icon: 'user'
   },
   {
     label: '收件人',
-    value: email.value?.to,
+    value: email.value?.to?.[0]?.address,
     icon: 'user-circle'
   },
   {
@@ -80,7 +80,7 @@ const headerInfo = computed(() => [
   },
   {
     label: '接收时间',
-    value: email.value ? new Date(email.value.receivedAt).toLocaleString() : '',
+    value: email.value ? new Date(email.value.date!).toLocaleString() : '',
     icon: 'time'
   }
 ]);

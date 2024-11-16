@@ -2,6 +2,9 @@ name = "seedmail"
 compatibility_date = "2024-01-01"
 nodejs_compat = true
 
+# Pages 配置
+pages_build_output_dir = "dist"
+
 # 开发环境配置
 [env.dev]
 vars = {}  # 不要在这里写入实际值

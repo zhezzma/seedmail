@@ -71,10 +71,10 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
                     );
                 } else {
                     // 使用解构赋值和 rest 操作符来分离 rawEmail
-                    const { rawEmail, ...emailData } = email;
+                    const { rawEmail} = email;
                     const binaryData = Buffer.from(rawEmail, 'base64');//Uint8Array.from(atob(rawEmail), c => c.charCodeAt(0));
                     const parsed = await PostalMime.parse(binaryData);
-                    const result = { ...emailData, ...parsed };
+                    const result = {id:email.id, ...parsed}
                     response = new Response(
                         JSON.stringify(result),
                         { headers: { 'Content-Type': 'application/json' } }
