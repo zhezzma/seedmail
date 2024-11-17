@@ -87,12 +87,12 @@ const handleLogin = async () => {
             </t-input>
           </div>
 
-          <div class="flex items-center justify-between text-sm">
+          <!-- <div class="flex items-center justify-between text-sm">
             <t-checkbox>记住我</t-checkbox>
             <a href="#" class="text-blue-600 hover:text-blue-700 transition-colors">
               忘记密码？
             </a>
-          </div>
+          </div> -->
 
           <t-button
             type="submit"
