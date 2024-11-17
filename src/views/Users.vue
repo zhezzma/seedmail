@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { MessagePlugin, PaginationProps, TableProps } from 'tdesign-vue-next';
-import { emailApi } from '../services/emailApi';
+import { userApi } from '../services/userApi';
 import { useRouter } from 'vue-router';
 import { h } from 'vue';
 import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';
@@ -17,12 +17,25 @@ const pagination = ref({
   pageSize: 10
 });
 
+const deleteUser = async (row: Recipient) => {
+  try {
+    await userApi.deleteUser(row.email);
+    MessagePlugin.success('删除成功');
+    await fetchRecipients({
+      current: pagination.value.current,
+      pageSize: pagination.value.pageSize,
+    });
+  } catch (error) {
+    MessagePlugin.error('删除失败');
+  }
+};
+
 const columns = ref([
   { colKey: 'email', title: '邮箱地址', width: 300 },
   {
     colKey: 'operation',
     title: '操作',
-    width: 120,
+    width: 200,
     cell: (d: any, { row }: { row: Recipient }) => {
       return h(TSpace, {}, {
         default: () => [
@@ -32,6 +45,13 @@ const columns = ref([
             onClick: () => sendMail(row)
           }, {
             default: () => '写信'
+          }),
+          h(TButton, {
+            theme: 'danger',
+            variant: 'text',
+            onClick: () => deleteUser(row)
+          }, {
+            default: () => '删除'
           })
         ]
       });
@@ -55,7 +75,7 @@ const fetchRecipients = async (paginationInfo: PaginationProps) => {
   try {
     loading.value = true;
     const { current, pageSize } = paginationInfo;
-    const response = await emailApi.listRecipients(current, pageSize);
+    const response = await userApi.listUsers(current, pageSize);
     recipients.value = response.recipients.map((x: string) => {
       return {
         email: x

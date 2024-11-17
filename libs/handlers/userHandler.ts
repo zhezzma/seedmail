@@ -18,7 +18,7 @@ export async function handleListUsers(
 
     return new Response(
       JSON.stringify({
-        recipients: result.users,
+        users: result.users,
         total: result.total,
         page,
         pageSize,

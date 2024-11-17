@@ -9,13 +9,19 @@ const routes = [
   },
   {
     path: '/',
-    redirect: '/emails',
+    redirect: '/inbox',
     meta: { requiresAuth: true }
   },
   {
-    path: '/emails',
-    name: 'EmailList',
-    component: () => import('../views/EmailList.vue'),
+    path: '/inbox',
+    name: 'Inbox',
+    component: () => import('../views/Inbox.vue'),
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/sent',
+    name: 'Sent',
+    component: () => import('../views/Sent.vue'),
     meta: { requiresAuth: true }
   },
   {
@@ -31,9 +37,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/recipients',
-    name: 'Recipients',
-    component: () => import('../views/Recipients.vue'),
+    path: '/users',
+    name: 'Users',
+    component: () => import('../views/Users.vue'),
     meta: { requiresAuth: true }
   }
 ];

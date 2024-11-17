@@ -7,8 +7,10 @@ import type { EmailRecord } from '../types/email';
 import { h } from 'vue';
 import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';
 
-
-
+// 定义组件属性
+const props = defineProps<{
+  type: 'RECEIVED' | 'SENT'
+}>();
 
 const router = useRouter();
 const loading = ref(false);
@@ -59,11 +61,10 @@ const columns = ref([
 ]);
 
 const fetchEmails = async (paginationInfo: PaginationProps) => {
-
   try {
     loading.value = true;
     const { current, pageSize } = paginationInfo;
-    const response = await emailApi.listEmails(current, pageSize);
+    const response = await emailApi.listEmails(props.type, current, pageSize);
     emails.value = response.emails;
     pagination.value.total = response.total;
   } catch (error) {
@@ -74,7 +75,7 @@ const fetchEmails = async (paginationInfo: PaginationProps) => {
   }
 };
 
-
+// ...其余方法保持不变...
 const handleView = (id: string) => {
   router.push(`/emails/${id}`);
 };
@@ -84,12 +85,9 @@ const handleDelete = async (id: string) => {
     await emailApi.deleteEmail(id);
     MessagePlugin.success('删除成功');
     
-    // 计算删除后的总数
     const newTotal = pagination.value.total - 1;
-    // 计算最大页码
     const maxPage = Math.ceil(newTotal / pagination.value.pageSize);
     
-    // 如果当前页大于最大页码，说明需要跳转到上一页
     if (pagination.value.current > maxPage) {
       pagination.value.current = Math.max(1, pagination.value.current - 1);
     }
@@ -104,8 +102,6 @@ const handleDelete = async (id: string) => {
 };
 
 const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
-  console.log('page-change', pageInfo);
-  // 下面为受控方式，如果使用此方式，将pagination内的defaultCurrent改为current
   pagination.value.current = pageInfo.current;
   pagination.value.pageSize = pageInfo.pageSize;
   await fetchEmails(pageInfo);
@@ -122,11 +118,12 @@ onMounted(async () => {
   });
 });
 </script>
+
 <template>
-  <div class="p-6 ">
+  <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        邮件列表
+        {{ type === 'RECEIVED' ? '收件箱' : '已发送' }}
       </h1>
       <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
         <template #icon>
@@ -173,7 +170,6 @@ onMounted(async () => {
   }
 }
 
-/* 优化分页器样式 */
 :deep(.t-pagination) {
   @apply mt-4;
 }

@@ -8,8 +8,13 @@ const route = useRoute();
 const menuVisible = ref(false);
 const menu = [
   {
-    name: '邮件列表',
-    path: '/emails',
+    name: '收件箱',
+    path: '/inbox',
+    icon: 'mail'
+  },
+  {
+    name: '发件箱',
+    path: '/sent',
     icon: 'mail'
   },
   {
@@ -19,7 +24,7 @@ const menu = [
   },
   {
     name: '邮箱列表',
-    path: '/recipients',
+    path: '/users',
     icon: 'user-circle'
   }
 ];

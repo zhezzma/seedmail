@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { MessagePlugin } from 'tdesign-vue-next'
 import logo from '../assets/logo.png'
+import { userApi } from '../services/userApi'
 
 const router = useRouter()
 const username = ref('')
@@ -18,21 +19,9 @@ const handleLogin = async () => {
 
   loading.value = true
   try {
-    const response = await fetch(`${API_BASE_URL}/api/login`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        username: username.value,
-        password: password.value,
-      }),
-    })
-
-    const data = await response.json()
-
+    const data = await userApi.login(username.value, password.value)
+    
     if (data.success) {
-      // 保存token和登录状态
       localStorage.setItem('token', data.token)
       localStorage.setItem('isAuthenticated', 'true')
       
