@@ -1,32 +1,21 @@
 import { KVNamespace } from '@cloudflare/workers-types';
-import { EmailRecord, EmailSendRequest } from '../types/email';
+import { EmailRecord, EmailSendRequest, EmailType } from '../types/email';
 import { CreateEmailResponse, Resend } from 'resend';
-
+import { Buffer } from 'node:buffer';
+import { updateUsersList } from './userService';
 // 常量定义
-const RECIPIENTS_KEY = 'all_recipients';
-const EMAIL_PREFIX = 'email:';
+const RECEIVED_EMAIL_PREFIX = 'received:';
+const SENT_EMAIL_PREFIX = 'sent:';
 
 /**
  * 生成邮件存储的键名
  */
-function getEmailKey(emailId: string): string {
-  return `${EMAIL_PREFIX}${emailId}`;
-}
-
-/**
- * 更新收件人列表
- */
-async function updateRecipientsList(
-  kv: KVNamespace,
-  email: string,
-  requestId: string
-): Promise<void> {
-  const recipients = await kv.get(RECIPIENTS_KEY, 'json') as string[] || [];
-  if (!recipients.includes(email)) {
-    recipients.push(email);
-    await kv.put(RECIPIENTS_KEY, JSON.stringify(recipients));
-    console.log(`[${requestId}] 新收件人已添加: ${email}`);
+function getEmailKey(emailId: string, type: EmailType): string {
+  if (type === EmailType.NONE) {
+    throw new Error('邮件类型不能为空');
   }
+  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  return `${prefix}${emailId}`;
 }
 
 /**
@@ -37,8 +26,8 @@ export async function storeEmail(
   email: EmailRecord,
   requestId: string
 ): Promise<void> {
-  await kv.put(getEmailKey(email.id), JSON.stringify(email));
-  await updateRecipientsList(kv, email.to, requestId);
+  await kv.put(getEmailKey(email.id, EmailType.RECEIVED), JSON.stringify(email));
+  await updateUsersList(kv, email.to, requestId);
 }
 
 /**
@@ -46,9 +35,20 @@ export async function storeEmail(
  */
 export async function getEmailById(
   kv: KVNamespace,
-  emailId: string
+  emailId: string,
+  type: EmailType,
 ): Promise<EmailRecord | null> {
-  return kv.get(getEmailKey(emailId), 'json');
+  if (type === EmailType.NONE) {
+    // 分别查找已发送和已接收的邮件
+    const receivedEmail = await kv.get(getEmailKey(emailId, EmailType.RECEIVED), 'json');
+    if (receivedEmail) return receivedEmail as EmailRecord;
+
+    const sentEmail = await kv.get(getEmailKey(emailId, EmailType.SENT), 'json');
+    if (sentEmail) return sentEmail as EmailRecord;
+
+    return null;
+  }
+  return kv.get(getEmailKey(emailId, type), 'json');
 }
 
 /**
@@ -56,9 +56,16 @@ export async function getEmailById(
  */
 export async function deleteEmail(
   kv: KVNamespace,
-  emailId: string
+  emailId: string,
+  type: EmailType,
 ): Promise<void> {
-  await kv.delete(getEmailKey(emailId));
+  if (type === EmailType.NONE) {
+    // 尝试删除两种类型的邮件
+    await kv.delete(getEmailKey(emailId, EmailType.RECEIVED));
+    await kv.delete(getEmailKey(emailId, EmailType.SENT));
+    return;
+  }
+  await kv.delete(getEmailKey(emailId, type));
 }
 
 /**
@@ -67,14 +74,16 @@ export async function deleteEmail(
 export async function listEmails(
   kv: KVNamespace,
   page: number,
-  pageSize: number
+  pageSize: number,
+  type: EmailType
 ): Promise<{
   emails: EmailRecord[];
   total: number;
   totalPages: number;
 }> {
-  const list = await kv.list({ prefix: EMAIL_PREFIX });
-  
+  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  const list = await kv.list({ prefix });
+
   // 获取所有邮件并过滤掉null值
   const allEmails = (await Promise.all(
     list.keys.map(key => kv.get(key.name, 'json'))
@@ -87,7 +96,7 @@ export async function listEmails(
   allEmails.sort((a, b) => {
     return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
   });
-  
+
   // 分页处理
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
@@ -107,14 +116,16 @@ export async function listEmails(
 export async function cleanupOldEmails(
   kv: KVNamespace,
   requestId: string,
+  type: EmailType,
   maxEmails: number = 500
 ): Promise<void> {
   console.log(`[${requestId}] 开始检查邮件数量`);
-  const list = await kv.list({ prefix: EMAIL_PREFIX });
-  
+  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  const list = await kv.list({ prefix: prefix });
+
   if (list.keys.length > maxEmails) {
     console.log(`[${requestId}] 邮件超过${maxEmails}条，开始清理旧邮件`);
-    
+
     // 获取所有邮件并按时间排序
     const emails = await Promise.all(
       list.keys.map(async (key) => {
@@ -122,15 +133,15 @@ export async function cleanupOldEmails(
         return { key: key.name, email };
       })
     );
-    
+
     // 按接收时间降序排序
     emails.sort((a, b) => {
       return new Date(b.email.receivedAt).getTime() - new Date(a.email.receivedAt).getTime();
     });
-    
+
     // 获取需要删除的邮件（保留最新的 maxEmails 条）
     const keysToDelete = emails.slice(maxEmails).map(item => item.key);
-    
+
     // 删除旧邮件
     await Promise.all(keysToDelete.map(async (key) => {
       await kv.delete(key);
@@ -142,14 +153,10 @@ export async function cleanupOldEmails(
 }
 
 /**
- * 发送邮件
- * 使用Resend服务发送邮件
- * @param resendKey Resend API密钥
- * @param emailData 要发送的邮件数据
- * @param requestId 请求ID
- * @returns 发送响应结果
+ * 发送邮件并存储记录
  */
 export async function sendEmail(
+  kv: KVNamespace,
   resendKey: string,
   emailData: EmailSendRequest,
   requestId: string
@@ -158,7 +165,6 @@ export async function sendEmail(
 
   try {
     const resend = new Resend(resendKey);
-
     const response = await resend.emails.send({
       from: emailData.from,
       to: [emailData.to],
@@ -166,40 +172,27 @@ export async function sendEmail(
       html: emailData.content,
     });
 
-    console.log(`[${requestId}] 邮件发送成功:`, response);
+    // 存储发送的邮件记录
+    const emailRecord: EmailRecord = {
+      id: response.data?.id || crypto.randomUUID(),
+      from: emailData.from,
+      to: emailData.to,
+      subject: emailData.subject,
+      receivedAt: new Date().toISOString(),
+      spfStatus: 'pass',
+      dmarcStatus: 'pass',
+      dkimStatus: 'pass',
+      headers: {},
+      size: emailData.content.length,
+      rawEmail: Buffer.from(emailData.content).toString('base64')
+    };
+
+    await kv.put(getEmailKey(emailRecord.id, EmailType.SENT), JSON.stringify(emailRecord));
+    console.log(`[${requestId}] 邮件发送成功并已存储:`, response);
 
     return response;
   } catch (error) {
     console.error(`[${requestId}] 邮件发送失败:`, error);
     throw error;
   }
-}
-
-/**
- * 分页获取收件人列表
- * @param kv KV存储实例
- * @param page 页码
- * @param pageSize 每页数量
- * @returns 分页后的收件人列表及分页信息
- */
-export async function listRecipients(
-  kv: KVNamespace,
-  page: number,
-  pageSize: number
-): Promise<{
-  recipients: string[];
-  total: number;
-  totalPages: number;
-}> {
-  const recipients = await kv.get(RECIPIENTS_KEY, 'json') as string[] || [];
-
-  const start = (page - 1) * pageSize;
-  const end = start + pageSize;
-  const paginatedRecipients = recipients.slice(start, end);
-
-  return {
-    recipients: paginatedRecipients,
-    total: recipients.length,
-    totalPages: Math.ceil(recipients.length / pageSize)
-  };
 }

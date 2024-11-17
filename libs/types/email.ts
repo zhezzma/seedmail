@@ -18,6 +18,15 @@ export interface EmailRecord {
 }
 
 /**
+ * 邮件类型枚举
+ */
+export enum EmailType {
+  NONE = 'none', //当为none的时候,就是查找所有的邮件
+  RECEIVED = 'received',
+  SENT = 'sent'
+}
+
+/**
  * 分页响应接口
  */
 export interface PaginatedResponse<T> {

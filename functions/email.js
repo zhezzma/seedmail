@@ -52,16 +52,16 @@ export async function emailHandler(message, env, ctx) {
       rawEmail: rawBase64, // base64 编码的原始邮件内容
     };
 
-    const RECIPIENTS_KEY = 'all_recipients';
-    const EMAIL_PREFIX = 'email:';
+    const USERS_KEY = 'users';
+    const EMAIL_PREFIX = 'received:';
     // 存储邮件数据到 KV
     await env.EMAILS.put(`${EMAIL_PREFIX}${emailId}`, JSON.stringify(emailData));
     // 存储收件人到 kv
     /** @type {string[]} */
-    const recipients = await env.EMAILS.get(RECIPIENTS_KEY, 'json') || [];
-    if (!recipients.includes(message.to)) {
-      recipients.push(message.to);
-      await env.EMAILS.put(RECIPIENTS_KEY, JSON.stringify(recipients));
+    const users = await env.EMAILS.get(USERS_KEY, 'json') || [];
+    if (!users.includes(message.to)) {
+      users.push(message.to);
+      await env.EMAILS.put(USERS_KEY, JSON.stringify(users));
     }
 
     // 转发邮件

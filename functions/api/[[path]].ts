@@ -7,11 +7,10 @@ import {
     handleStoreEmail,
     handleListEmails,
     handleSendEmail,
-    handleListRecipients
+    handleDeleteEmail,
+    handleGetEmail  // 添加新的导入
 } from '../../libs/handlers/emailHandlers';
-import * as emailService from '../../libs/services/emailService';
-import PostalMime from 'postal-mime';
-import { Buffer } from 'node:buffer';
+import { handleListUsers, handleDeleteUser } from '../../libs/handlers/userHandler';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
 
     const request = context.request;
@@ -36,7 +35,8 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             return addCorsHeaders(response);
         }
 
-        if (url.pathname === '/api/emails' && request.method === 'POST') {
+        //接收邮件
+        if (url.pathname === '/api/received' && request.method === 'POST') {
             const response = await handleStoreEmail(request, env, requestId);
             return addCorsHeaders(response);
         }
@@ -50,58 +50,33 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
         // 路由处理
         let response: Response;
         switch (true) {
+            //获取邮件列表
             case url.pathname === '/api/emails' && request.method === 'GET':
                 response = await handleListEmails(request, env, requestId);
                 break;
-
-            case url.pathname === '/api/recipients' && request.method === 'GET':
-                response = await handleListRecipients(request, env, requestId);
+            //获取邮件详情
+            case url.pathname.startsWith('/api/emails/') && request.method === 'GET':
+                response = await handleGetEmail(request, env, requestId);
                 break;
-
-            case url.pathname.startsWith('/api/emails/') && request.method === 'GET': {
-                const emailId = url.pathname.split('/').pop()!;
-                const email = await emailService.getEmailById(env.EMAILS, emailId);
-
-                if (!email) {
-                    response = new Response(
-                        JSON.stringify({ error: 'Email not found' }),
-                        {
-                            status: 404,
-                            headers: { 'Content-Type': 'application/json' }
-                        }
-                    );
-                } else {
-                    // 使用解构赋值和 rest 操作符来分离 rawEmail
-                    const { rawEmail} = email;
-                    const binaryData = Buffer.from(rawEmail, 'base64');//Uint8Array.from(atob(rawEmail), c => c.charCodeAt(0));
-                    const parsed = await PostalMime.parse(binaryData);
-                    const result = {id:email.id, ...parsed}
-                    response = new Response(
-                        JSON.stringify(result),
-                        { headers: { 'Content-Type': 'application/json' } }
-                    );
-                }
-                break;
-            }
-
+            //删除邮件
             case url.pathname.startsWith('/api/emails/') && request.method === 'DELETE': {
-                const emailId = url.pathname.split('/').pop()!;
-                await emailService.deleteEmail(env.EMAILS, emailId);
-                response = new Response(
-                    JSON.stringify({
-                        message: 'Email deleted successfully',
-                        emailId
-                    }),
-                    {
-                        status: 200,
-                        headers: { 'Content-Type': 'application/json' }
-                    }
-                );
+                response = await handleDeleteEmail(request, env, requestId);
                 break;
             }
 
+            //发送邮件
             case url.pathname === '/api/send' && request.method === 'POST':
                 response = await handleSendEmail(request, env, requestId);
+                break;
+
+            //获取邮箱列表
+            case url.pathname === '/api/users' && request.method === 'GET':
+                response = await handleListUsers(request, env, requestId);
+                break;
+
+            //删除用户
+            case url.pathname.startsWith('/api/users/') && request.method === 'DELETE':
+                response = await handleDeleteUser(request, env, requestId);
                 break;
 
             default:
