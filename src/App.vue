@@ -13,9 +13,9 @@ const menu = [
     icon: 'mail'
   },
   {
-    name: '发件箱',
+    name: '已发邮件',
     path: '/sent',
-    icon: 'mail'
+    icon: 'send'
   },
   // {
   //   name: '写邮件',

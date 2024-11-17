@@ -172,6 +172,22 @@ export async function sendEmail(
       html: emailData.content,
     });
 
+    // 构造标准的邮件格式
+    const date = new Date().toUTCString();
+    const messageId = `<${response.data?.id || crypto.randomUUID()}@seedmail.com>`;
+    const rawEmail = [
+      `From: ${emailData.from}`,
+      `To: ${emailData.to}`,
+      `Subject: ${emailData.subject}`,
+      `Message-ID: ${messageId}`,
+      `Date: ${date}`,
+      'MIME-Version: 1.0',
+      'Content-Type: text/html; charset=UTF-8',
+      'Content-Transfer-Encoding: base64',
+      '',
+      Buffer.from(emailData.content).toString('base64')
+    ].join('\r\n');
+
     // 存储发送的邮件记录
     const emailRecord: EmailRecord = {
       id: response.data?.id || crypto.randomUUID(),
@@ -182,9 +198,12 @@ export async function sendEmail(
       spfStatus: 'pass',
       dmarcStatus: 'pass',
       dkimStatus: 'pass',
-      headers: {},
-      size: emailData.content.length,
-      rawEmail: Buffer.from(emailData.content).toString('base64')
+      headers: {
+        'message-id': messageId,
+        'date': date
+      },
+      size: rawEmail.length,
+      rawEmail: Buffer.from(rawEmail).toString('base64')
     };
 
     await kv.put(getEmailKey(emailRecord.id, EmailType.SENT), JSON.stringify(emailRecord));
