@@ -26,7 +26,7 @@ const handleLogin = async () => {
       localStorage.setItem('isAuthenticated', 'true')
       
       MessagePlugin.success('登录成功')
-      router.push('/emails')
+      router.push('/')
     } else {
       MessagePlugin.error(data.message || '登录失败')
     }

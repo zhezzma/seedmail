@@ -10,7 +10,7 @@ interface Recipient {
 }
 
 const loading = ref(false);
-const recipients = ref<Recipient[]>([]);
+const users = ref<Recipient[]>([]);
 const pagination = ref({
   total: 0,
   current: 1,
@@ -21,7 +21,7 @@ const deleteUser = async (row: Recipient) => {
   try {
     await userApi.deleteUser(row.email);
     MessagePlugin.success('删除成功');
-    await fetchRecipients({
+    await fetchUsers({
       current: pagination.value.current,
       pageSize: pagination.value.pageSize,
     });
@@ -71,20 +71,20 @@ const sendMail = (row: Recipient) => {
 };
 
 
-const fetchRecipients = async (paginationInfo: PaginationProps) => {
+const fetchUsers = async (paginationInfo: PaginationProps) => {
   try {
     loading.value = true;
     const { current, pageSize } = paginationInfo;
     const response = await userApi.listUsers(current, pageSize);
-    recipients.value = response.recipients.map((x: string) => {
+    users.value = response.users.map((x: string) => {
       return {
         email: x
       };
     });
     pagination.value.total = response.total;
   } catch (error) {
-    MessagePlugin.error('获取邮箱列表失败');
-    recipients.value = [];
+    MessagePlugin.error('获取用户列表失败');
+    users.value = [];
   } finally {
     loading.value = false;
   }
@@ -93,11 +93,11 @@ const fetchRecipients = async (paginationInfo: PaginationProps) => {
 const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
   pagination.value.current = pageInfo.current;
   pagination.value.pageSize = pageInfo.pageSize;
-  await fetchRecipients(pageInfo);
+  await fetchUsers(pageInfo);
 };
 
 onMounted(async () => {
-  await fetchRecipients({
+  await fetchUsers({
     current: pagination.value.current,
     pageSize: pagination.value.pageSize,
   });
@@ -108,17 +108,17 @@ onMounted(async () => {
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        邮箱列表
+        用户列表
       </h1>
     </div>
 
     <t-card class="shadow-md rounded-xl overflow-hidden">
-      <t-table :data="recipients" :columns="columns" :loading="loading" :pagination="pagination" row-key="email" hover
+      <t-table :data="users" :columns="columns" :loading="loading" :pagination="pagination" row-key="email" hover
         stripe lazy-load @page-change="onPageChange" class="recipients-table">
         <template #empty>
           <div class="flex flex-col items-center justify-center py-12 text-gray-500">
             <t-icon name="user-circle" size="48px" class="mb-4 text-gray-300" />
-            <p>暂无邮箱记录</p>
+            <p>暂无用户记录</p>
           </div>
         </template>
       </t-table>
