@@ -9,7 +9,7 @@ import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';
 
 // 定义组件属性
 const props = defineProps<{
-  type: 'RECEIVED' | 'SENT'
+  type: 'received' | 'sent'
 }>();
 
 const router = useRouter();
@@ -123,7 +123,7 @@ onMounted(async () => {
   <div class="p-6">
     <div class="flex justify-between items-center mb-6">
       <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        {{ type === 'RECEIVED' ? '收件箱' : '已发送' }}
+        {{ type === 'received' ? '收件箱' : '已发送' }}
       </h1>
       <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
         <template #icon>

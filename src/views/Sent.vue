@@ -3,5 +3,5 @@ import EmailList from '../components/EmailList.vue';
 </script>
 
 <template>
-  <EmailList type="SENT" />
+  <EmailList type="sent" />
 </template>

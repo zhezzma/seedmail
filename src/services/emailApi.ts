@@ -4,7 +4,7 @@ import { API_BASE_URL, getHeaders, handleResponse } from './util';
 
 
 export const emailApi = {
-  async listEmails(type: "RECEIVED"|"SENT", page: number = 1, pageSize: number = 20) {
+  async listEmails(type: "received"|"sent", page: number = 1, pageSize: number = 20) {
     const response = await fetch(
       `${API_BASE_URL}/api/emails?type=${type}&page=${page}&pageSize=${pageSize}`,
       { headers: getHeaders() }

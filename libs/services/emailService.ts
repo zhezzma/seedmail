@@ -188,6 +188,7 @@ export async function sendEmail(
     };
 
     await kv.put(getEmailKey(emailRecord.id, EmailType.SENT), JSON.stringify(emailRecord));
+    await updateUsersList(kv, emailData.from, requestId);
     console.log(`[${requestId}] 邮件发送成功并已存储:`, response);
 
     return response;
