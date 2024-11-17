@@ -54,7 +54,7 @@ const handleLogin = async () => {
         <div class="flex flex-col items-center mb-8">
           <img :src="logo" alt="logo" class="w-16 h-16 mb-4" />
           <h2 class="text-2xl font-bold text-gray-800">SEED MAIL</h2>
-          <p class="text-gray-500 mt-2">登录以继续使用</p>
+          <!-- <p class="text-gray-500 mt-2">登录以继续使用</p> -->
         </div>
 
         <!-- 登录表单 -->
