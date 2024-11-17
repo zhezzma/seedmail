@@ -17,11 +17,11 @@ const menu = [
     path: '/sent',
     icon: 'mail'
   },
-  {
-    name: '写邮件',
-    path: '/compose',
-    icon: 'edit'
-  },
+  // {
+  //   name: '写邮件',
+  //   path: '/compose',
+  //   icon: 'edit'
+  // },
   {
     name: '用户列表',
     path: '/users',
