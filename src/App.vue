@@ -37,6 +37,11 @@ const logout = () => {
 const toggleMenu = () => {
   menuVisible.value = !menuVisible.value;
 };
+
+
+const handleCompose = () => {
+  router.push('/compose');
+};
 </script>
 
 <template>
@@ -45,15 +50,8 @@ const toggleMenu = () => {
   </template>
   <t-layout v-else class="h-screen">
     <!-- 移动端抽屉菜单 -->
-    <t-drawer
-      v-model:visible="menuVisible"
-      placement="left"
-      :size="232"
-      :footer="false"
-      :header="false"
-      :close-on-overlay-click="true"
-      class="lg:hidden"
-    >
+    <t-drawer v-model:visible="menuVisible" placement="left" :size="232" :footer="false" :header="false"
+      :close-on-overlay-click="true" class="lg:hidden">
       <t-menu :value="route.path" theme="dark" class="h-full bg-transparent ">
         <template #logo>
           <router-link to="/" class="flex items-center gap-2 p-4">
@@ -61,14 +59,8 @@ const toggleMenu = () => {
             <h1 class="text-xl font-bold text-white">SEED MAIL</h1>
           </router-link>
         </template>
-        <t-menu-item
-          v-for="item in menu"
-          :key="item.path"
-          :value="item.path"
-          :to="item.path"
-          @click="menuVisible = false"
-          class="menu-item mx-4 my-2 rounded-xl"
-        >
+        <t-menu-item v-for="item in menu" :key="item.path" :value="item.path" :to="item.path"
+          @click="menuVisible = false" class="menu-item mx-4 my-2 rounded-xl">
           <template #icon>
             <t-icon :name="item.icon" />
           </template>
@@ -102,24 +94,21 @@ const toggleMenu = () => {
         <div class="flex items-center justify-between h-full  px-4 lg:px-8">
           <!-- 移动端菜单按钮 -->
           <div class="flex items-center gap-4">
-            <t-button
-              theme="default"
-              variant="text"
-              class="lg:hidden"
-              @click="toggleMenu"
-            >
+            <t-button theme="default" variant="text" class="lg:hidden" @click="toggleMenu">
               <t-icon name="menu" size="24px" />
             </t-button>
-            <h1 class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
-             
-            </h1>
+            <!-- <h1
+              class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+
+            </h1> -->
+            <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
+              <template #icon>
+                <t-icon name="edit" />
+              </template>
+              写邮件
+            </t-button>
           </div>
-          <t-button
-            theme="danger"
-            variant="text"
-            @click="logout"
-            class="logout-btn"
-          >
+          <t-button theme="danger" variant="text" @click="logout" class="logout-btn">
             <t-icon name="logout" class="mr-2" />
             <span class="hidden sm:inline">退出登录</span>
           </t-button>
@@ -182,11 +171,11 @@ const toggleMenu = () => {
   @apply bg-transparent;
 } */
 
-:deep(.t-drawer__body){
+:deep(.t-drawer__body) {
   @apply p-0;
 }
 
-:deep(.t-drawer__body){
+:deep(.t-drawer__body) {
   @apply p-0;
 }
 

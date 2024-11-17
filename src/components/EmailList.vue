@@ -107,9 +107,6 @@ const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
   await fetchEmails(pageInfo);
 };
 
-const handleCompose = () => {
-  router.push('/compose');
-};
 
 onMounted(async () => {
   await fetchEmails({
@@ -125,12 +122,7 @@ onMounted(async () => {
       <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
         {{ type === 'received' ? '收件箱' : '已发送' }}
       </h1>
-      <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
-        <template #icon>
-          <t-icon name="edit" />
-        </template>
-        写邮件
-      </t-button>
+
     </div>
 
     <t-card class="shadow-md rounded-xl overflow-hidden">
