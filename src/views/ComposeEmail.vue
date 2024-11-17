@@ -41,7 +41,7 @@ const handleSubmit: FormProps['onSubmit'] =async ({ validateResult, firstError }
   try {
     await emailApi.sendEmail(formData);
     MessagePlugin.success('发送成功');
-    router.push('/');
+    router.push('/sent');
   } catch (error) {
     MessagePlugin.error('发送失败');
   } finally {

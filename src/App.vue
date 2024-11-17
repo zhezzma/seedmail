@@ -23,7 +23,7 @@ const menu = [
     icon: 'edit'
   },
   {
-    name: '邮箱列表',
+    name: '用户列表',
     path: '/users',
     icon: 'user-circle'
   }
