@@ -7,8 +7,6 @@
       "strict": true,
       "lib": ["ESNext"],
       "types": ["@cloudflare/workers-types","node"],
-      "outDir": "../dist",    // 输出到上级的 dist 目录
-      "rootDir": "../",       // 以上级目录为根
       "skipLibCheck": true // 添加这行可以跳过对 node_modules 的类型检查
     },
     "include": ["./**/*.ts", "email.js"],
