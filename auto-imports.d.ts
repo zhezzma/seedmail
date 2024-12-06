@@ -6,6 +6,7 @@
 // biome-ignore lint: disable
 export {}
 declare global {
+  const MessagePlugin: typeof import('tdesign-vue-next')['MessagePlugin']
   const TButton: typeof import('tdesign-vue-next')['Button']
   const TSpace: typeof import('tdesign-vue-next')['Space']
 }

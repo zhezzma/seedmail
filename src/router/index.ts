@@ -25,9 +25,9 @@ const routes = [
     meta: { requiresAuth: true }
   },
   {
-    path: '/emails/:id',
-    name: 'EmailDetail',
-    component: () => import('../views/EmailDetail.vue'),
+    path: '/email/:id',
+    name: 'Email',
+    component: () => import('../views/Email.vue'),
     meta: { requiresAuth: true }
   },
   {

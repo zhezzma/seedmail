@@ -50,7 +50,7 @@ const handleCompose = () => {
   </template>
   <t-layout v-else class="h-screen">
     <!-- 移动端抽屉菜单 -->
-    <t-drawer v-model:visible="menuVisible" placement="left" :size="232" :footer="false" :header="false"
+    <t-drawer v-model:visible="menuVisible" placement="left" size="232" :footer="false" :header="false"
       :close-on-overlay-click="true" class="lg:hidden">
       <t-menu :value="route.path" theme="dark" class="h-full bg-transparent ">
         <template #logo>
@@ -116,7 +116,7 @@ const handleCompose = () => {
       </t-header>
 
       <!-- 内容区域 -->
-      <t-content class="content bg-gray-50/30 flex-1  overflow-y-auto  p-4 lg:p-6 w-full">
+      <t-content class="content bg-gray-50/30 flex-1  overflow-y-auto w-full">
         <router-view v-slot="{ Component }">
           <transition name="fade-slide" mode="out-in">
             <component :is="Component" />

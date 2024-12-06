@@ -7,16 +7,16 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    EmailDetail: typeof import('./src/components/EmailDetail.vue')['default']
     EmailList: typeof import('./src/components/EmailList.vue')['default']
     RouterLink: typeof import('vue-router')['RouterLink']
     RouterView: typeof import('vue-router')['RouterView']
     TAside: typeof import('tdesign-vue-next')['Aside']
     TButton: typeof import('tdesign-vue-next')['Button']
     TCard: typeof import('tdesign-vue-next')['Card']
-    TCheckbox: typeof import('tdesign-vue-next')['Checkbox']
     TContent: typeof import('tdesign-vue-next')['Content']
     TDrawer: typeof import('tdesign-vue-next')['Drawer']
-    TDropdown: typeof import('tdesign-vue-next')['Dropdown']
+    TEmpty: typeof import('tdesign-vue-next')['Empty']
     TFooter: typeof import('tdesign-vue-next')['Footer']
     TForm: typeof import('tdesign-vue-next')['Form']
     TFormItem: typeof import('tdesign-vue-next')['FormItem']
@@ -24,6 +24,9 @@ declare module 'vue' {
     TIcon: typeof import('tdesign-vue-next')['Icon']
     TInput: typeof import('tdesign-vue-next')['Input']
     TLayout: typeof import('tdesign-vue-next')['Layout']
+    TList: typeof import('tdesign-vue-next')['List']
+    TListItem: typeof import('tdesign-vue-next')['ListItem']
+    TLoading: typeof import('tdesign-vue-next')['Loading']
     TMenu: typeof import('tdesign-vue-next')['Menu']
     TMenuItem: typeof import('tdesign-vue-next')['MenuItem']
     TSpace: typeof import('tdesign-vue-next')['Space']

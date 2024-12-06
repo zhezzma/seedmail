@@ -1,176 +1,174 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import { MessagePlugin, PaginationProps, TableProps } from 'tdesign-vue-next';
+import { ref, onMounted, onUnmounted } from 'vue';
+import { MessagePlugin } from 'tdesign-vue-next';
 import { emailApi } from '../services/emailApi';
 import type { EmailRecord } from '../types/email';
-import { h } from 'vue';
-import { Button as TButton, Space as TSpace } from 'tdesign-vue-next';
 
-// 定义组件属性
-const props = defineProps<{
-  type: 'received' | 'sent'
+interface Props {
+  type: 'received' | 'sent';
+  selectedEmailId?: string | null;
+}
+
+const props = defineProps<Props>();
+const emit = defineEmits<{
+  (e: 'selectEmail', id: string): void;
 }>();
 
-const router = useRouter();
+// 状态管理
 const loading = ref(false);
+const hasMore = ref(true);
 const emails = ref<EmailRecord[]>([]);
-const pagination = ref({
-  total: 100,
-  current: 1,
-  pageSize: 10
-});
+const currentPage = ref(1);
+const pageSize = ref(15);
+const total = ref(0);
+let observer: IntersectionObserver | null = null;
 
-const columns = ref([
-  { colKey: 'from', title: '发件人', width: 150 },
-  { colKey: 'to', title: '收件人', width: 150 },
-  { colKey: 'subject', title: '主题', width: 300 },
-  {
-    colKey: 'receivedAt',
-    title: '接收时间',
-    width: 120,
-    cell: (h: any, { row }: { row: EmailRecord }) => {
-      return new Date(row.receivedAt).toLocaleString();
-    }
-  },
-  {
-    colKey: 'operation',
-    title: '操作',
-    width: 120,
-    cell: (d: any, { row }: { row: EmailRecord }) => {
-      return h(TSpace, {}, {
-        default: () => [
-          h(TButton, {
-            theme: 'primary',
-            variant: 'text',
-            onClick: () => handleView(row.id)
-          }, {
-            default: () => '查看'
-          }),
-          h(TButton, {
-            theme: 'danger',
-            variant: 'text',
-            onClick: () => handleDelete(row.id)
-          }, {
-            default: () => '删除'
-          })
-        ]
-      });
-    }
-  }
-]);
+// 防抖函数
+function debounce(fn: Function, delay: number) {
+  let timer: NodeJS.Timeout;
+  return function (...args: any[]) {
+    clearTimeout(timer);
+    timer = setTimeout(() => {
+      fn.apply(null, args);
+    }, delay);
+  };
+}
 
-const fetchEmails = async (paginationInfo: PaginationProps) => {
+// 获取邮件列表
+const fetchEmails = async (page: number = 1) => {
+  if (loading.value || (!hasMore.value && page > 1)) return;
+
   try {
     loading.value = true;
-    const { current, pageSize } = paginationInfo;
-    const response = await emailApi.listEmails(props.type, current, pageSize);
-    emails.value = response.emails;
-    pagination.value.total = response.total;
+    const response = await emailApi.listEmails(
+      props.type,
+      page,
+      pageSize.value
+    );
+
+    if (page === 1) {
+      emails.value = response.emails;
+    } else {
+      emails.value = [...emails.value, ...response.emails];
+    }
+
+    total.value = response.total;
+    currentPage.value = page;
+    hasMore.value = emails.value.length < total.value;
   } catch (error) {
-    MessagePlugin.error('获取邮件列表失败');
-    emails.value = []
+    MessagePlugin.error(page === 1 ? '获取邮件列表失败' : '加载更多邮件失败');
   } finally {
     loading.value = false;
   }
 };
 
-// ...其余方法保持不变...
-const handleView = (id: string) => {
-  router.push(`/emails/${id}`);
+// 加载更多数据
+const loadMore = debounce(() => {
+  if (hasMore.value && !loading.value) {
+    fetchEmails(currentPage.value + 1);
+  }
+}, 200);
+
+// 处理邮件点击
+const handleEmailClick = (email: EmailRecord) => {
+  emit('selectEmail', email.id);
 };
 
-const handleDelete = async (id: string) => {
-  try {
-    await emailApi.deleteEmail(id);
-    MessagePlugin.success('删除成功');
-    
-    const newTotal = pagination.value.total - 1;
-    const maxPage = Math.ceil(newTotal / pagination.value.pageSize);
-    
-    if (pagination.value.current > maxPage) {
-      pagination.value.current = Math.max(1, pagination.value.current - 1);
+// 设置观察器
+const setupObserver = () => {
+  const options = {
+    root: null,
+    rootMargin: '20px',
+    threshold: 0.5,
+  };
+
+  observer = new IntersectionObserver((entries) => {
+    const target = entries[0];
+    if (target.isIntersecting) {
+      loadMore();
     }
-    
-    await fetchEmails({
-      current: pagination.value.current,
-      pageSize: pagination.value.pageSize,
-    });
-  } catch (error) {
-    MessagePlugin.error('删除失败');
+  }, options);
+
+  // 观察加载更多的元素
+  const loadingElement = document.querySelector('.loading-more');
+  if (loadingElement) {
+    observer.observe(loadingElement);
   }
 };
 
-const onPageChange: TableProps['onPageChange'] = async (pageInfo) => {
-  pagination.value.current = pageInfo.current;
-  pagination.value.pageSize = pageInfo.pageSize;
-  await fetchEmails(pageInfo);
-};
+// 生命周期钩子
+onMounted(() => {
+  fetchEmails();
+  setupObserver();
+});
 
-
-onMounted(async () => {
-  await fetchEmails({
-    current: pagination.value.current,
-    pageSize: pagination.value.pageSize,
-  });
+onUnmounted(() => {
+  if (observer) {
+    observer.disconnect();
+  }
 });
 </script>
 
 <template>
-  <div class="p-6">
-    <div class="flex justify-between items-center mb-6">
-      <h1 class="text-2xl font-bold bg-gradient-to-r from-blue-600 to-blue-800 bg-clip-text text-transparent">
-        {{ type === 'received' ? '收件箱' : '已发送' }}
-      </h1>
+  <t-list class="h-full overflow-y-auto">
+    <t-list-item
+      v-for="email in emails"
+      :key="email.id"
+      @click="handleEmailClick(email)"
+      class="cursor-pointer transition-colors duration-200"
+      :class="{
+        'bg-gray-50 hover:bg-gray-100': props.selectedEmailId === email.id,
+        'hover:bg-gray-50': props.selectedEmailId !== email.id
+      }"
+    >
+      <template #header>
+        <div class="flex justify-between items-center w-full">
+          <span class="font-medium">{{ email.from }}</span>
+          <span class="text-sm text-gray-500">
+            {{ new Date(email.receivedAt).toLocaleString() }}
+          </span>
+        </div>
+      </template>
+      <template #default>
+        <div class="w-full">
+          <div class="font-medium text-gray-900">{{ email.subject }}</div>
+          <div class="text-sm text-gray-500 truncate">
+            {{ email.from }}
+            {{ new Date(email.receivedAt).toLocaleString() }}
+          </div>
+        </div>
+      </template>
+    </t-list-item>
 
+    <!-- 加载状态和提示 -->
+    <div 
+      v-if="loading || hasMore" 
+      class="loading-more py-4 text-center text-gray-500"
+    >
+      <template v-if="loading">加载中...</template>
+      <template v-else>上拉加载更多</template>
     </div>
 
-    <t-card class="shadow-md rounded-xl overflow-hidden">
-      <t-table :data="emails" :columns="columns" :loading="loading" :pagination="pagination" row-key="id" hover stripe
-        lazy-load @page-change="onPageChange" class="email-table">
-        <template #empty>
-          <div class="flex flex-col items-center justify-center py-12 text-gray-500">
-            <t-icon name="mail" size="48px" class="mb-4 text-gray-300" />
-            <p>暂无邮件</p>
-          </div>
-        </template>
-      </t-table>
-    </t-card>
-  </div>
+    <!-- 无更多数据提示 -->
+    <div 
+      v-if="!hasMore && emails.length > 0" 
+      class="py-4 text-center text-gray-500"
+    >
+      没有更多数据了
+    </div>
+
+    <!-- 空状态提示 -->
+    <div 
+      v-if="!loading && emails.length === 0" 
+      class="py-4 text-center text-gray-500"
+    >
+      暂无数据
+    </div>
+  </t-list>
 </template>
 
 <style scoped>
-.email-table {
-  :deep(.t-table__header) {
-    @apply bg-gray-50;
-  }
-
-  :deep(.t-table__row) {
-    @apply transition-colors duration-200;
-  }
-
-  :deep(.t-table__row:hover) {
-    @apply bg-blue-50;
-  }
-
-  :deep(.t-table__cell) {
-    @apply py-4;
-  }
-
-  :deep(.t-button) {
-    @apply transition-colors duration-200;
-  }
-}
-
-:deep(.t-pagination) {
-  @apply mt-4;
-}
-
-:deep(.t-pagination .t-button) {
-  @apply hover:bg-blue-50;
-}
-
-:deep(.t-pagination .t-is-active) {
-  @apply bg-blue-600 text-white hover:bg-blue-700;
+:deep(.t-list-item) {
+  padding: 16px;
 }
 </style>
