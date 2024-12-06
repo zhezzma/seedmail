@@ -137,8 +137,8 @@ onUnmounted(() => {
           <div>
             {{ new Date(email.receivedAt).toLocaleString() }}
           </div>
-          <button @click="toggleStar(email, $event)" class="text-yellow-400 hover:text-yellow-500">
-            <t-icon :name="email.starred ? 'star-filled' : 'star'" />
+          <button @click="toggleStar(email, $event)" :class="{'text-yellow-400 hover:text-yellow-500': email.starred, 'text-gray-400 hover:text-gray-500': !email.starred}">
+            <t-icon size="large" :name="email.starred ? 'star-filled' : 'star'" />
           </button>
         </div>
       </div>
