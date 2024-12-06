@@ -80,8 +80,14 @@ const toggleStar = async (email: EmailRecord, event: Event) => {
   try {
     await emailApi.toggleStar(email.id);
     email.starred = !email.starred;
+    if (email.starred) {
+      MessagePlugin.success('收藏成功');
+    }
+    else {
+      MessagePlugin.success('取消收藏');
+    }
   } catch (error) {
-    MessagePlugin.error('操作失败');
+    MessagePlugin.error('收藏失败');
   }
 };
 
@@ -107,6 +113,17 @@ const setupObserver = () => {
   }
 };
 
+const handleDelete = async (id: string) => {
+  try {
+    await emailApi.deleteEmail(id);
+    MessagePlugin.success('删除成功');
+    // 删除成功后刷新数据
+    fetchEmails(1);
+  } catch (error) {
+    MessagePlugin.error('删除失败');
+  }
+};
+
 // 生命周期钩子
 onMounted(() => {
   fetchEmails();
@@ -123,7 +140,7 @@ onUnmounted(() => {
 <template>
   <t-list class="h-full overflow-y-auto">
     <t-list-item v-for="email in emails" :key="email.id" @click="handleEmailClick(email)"
-      class="cursor-pointer transition-colors duration-200 p-4 border-b border-gray-200" :class="{
+      class="cursor-pointer transition-colors duration-200 p-4 border-b border-gray-200 relative group" :class="{
         'bg-gray-50 hover:bg-gray-100': props.selectedEmailId === email.id,
         'hover:bg-gray-50': props.selectedEmailId !== email.id
       }">
@@ -132,14 +149,21 @@ onUnmounted(() => {
         <div class="font-medium truncate" title="{{ email.from }}"> {{ email.from }} </div>
         <!-- 第二行：主题 -->
         <div class="font-medium text-gray-900 truncate" title="{{ email.subject }}">{{ email.subject }}</div>
-        <!-- 第三行：时间 -->
+        <!-- 第三行：时间和删除按钮 -->
         <div class="flex justify-between items-center text-sm text-gray-500">
           <div>
             {{ new Date(email.receivedAt).toLocaleString() }}
           </div>
-          <button @click="toggleStar(email, $event)" :class="{'text-yellow-400 hover:text-yellow-500': email.starred, 'text-gray-400 hover:text-gray-500': !email.starred}">
-            <t-icon size="large" :name="email.starred ? 'star-filled' : 'star'" />
-          </button>
+          <div class="flex items-center space-x-2">
+            <button @click.stop="handleDelete(email.id)"
+              class="text-red-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">
+              <t-icon size="large" name="delete" />
+            </button>
+            <button @click="toggleStar(email, $event)"
+              :class="{ 'text-yellow-400 hover:text-yellow-500': email.starred, 'text-gray-400 hover:text-gray-500': !email.starred }">
+              <t-icon size="large" :name="email.starred ? 'star-filled' : 'star'" />
+            </button>
+          </div>
         </div>
       </div>
     </t-list-item>
@@ -167,5 +191,7 @@ onUnmounted(() => {
   padding: 16px;
 }
 
-
+:deep(.group:hover .group-hover\:opacity-100) {
+  opacity: 1;
+}
 </style>
