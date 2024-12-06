@@ -6,6 +6,7 @@ import { updateUsersList } from './userService';
 // 常量定义
 const RECEIVED_EMAIL_PREFIX = 'received:';
 const SENT_EMAIL_PREFIX = 'sent:';
+const STARRED_EMAIL_PREFIX = 'starred:';
 
 /**
  * 生成邮件存储的键名
@@ -14,8 +15,24 @@ function getEmailKey(emailId: string, type: EmailType): string {
   if (type === EmailType.NONE) {
     throw new Error('邮件类型不能为空');
   }
-  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  const prefix = getEmailPrefix(type);
   return `${prefix}${emailId}`;
+}
+
+/**
+ * 获取邮件类型对应的前缀
+ */
+function getEmailPrefix(type: EmailType): string {
+  switch (type) {
+    case EmailType.SENT:
+      return SENT_EMAIL_PREFIX;
+    case EmailType.RECEIVED:
+      return RECEIVED_EMAIL_PREFIX;
+    case EmailType.STARRED:
+      return STARRED_EMAIL_PREFIX;
+    default:
+      throw new Error('未知的邮件类型');
+  }
 }
 
 /**
@@ -63,6 +80,7 @@ export async function deleteEmail(
     // 尝试删除两种类型的邮件
     await kv.delete(getEmailKey(emailId, EmailType.RECEIVED));
     await kv.delete(getEmailKey(emailId, EmailType.SENT));
+    await kv.delete(getEmailKey(emailId, EmailType.STARRED));
     return;
   }
   await kv.delete(getEmailKey(emailId, type));
@@ -77,11 +95,11 @@ export async function listEmails(
   pageSize: number,
   type: EmailType
 ): Promise<{
-  emails: EmailRecord[];
+  emails: (EmailRecord & { starred?: boolean })[];
   total: number;
   totalPages: number;
 }> {
-  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  const prefix = getEmailPrefix(type);
   const list = await kv.list({ prefix });
 
   // 获取所有邮件并过滤掉null值
@@ -89,18 +107,30 @@ export async function listEmails(
     list.keys.map(key => kv.get(key.name, 'json'))
   )).filter((email): email is EmailRecord => email !== null);
 
+  // 获取所有标星邮件的ID
+  const starredList = await kv.list({ prefix: STARRED_EMAIL_PREFIX });
+  const starredEmailIds = new Set(
+    starredList.keys.map(key => key.name.replace(STARRED_EMAIL_PREFIX, ''))
+  );
+
+  // 为邮件添加星标状态
+  const emailsWithStarred = allEmails.map(email => ({
+    ...email,
+    starred: starredEmailIds.has(email.id)
+  }));
+
   // 更新total为实际存在的邮件数量
-  const total = allEmails.length;
+  const total = emailsWithStarred.length;
 
   // 按接收时间降序排序
-  allEmails.sort((a, b) => {
+  emailsWithStarred.sort((a, b) => {
     return new Date(b.receivedAt).getTime() - new Date(a.receivedAt).getTime();
   });
 
   // 分页处理
   const start = (page - 1) * pageSize;
   const end = start + pageSize;
-  const emails = allEmails.slice(start, end);
+  const emails = emailsWithStarred.slice(start, end);
 
   return {
     emails,
@@ -120,7 +150,7 @@ export async function cleanupOldEmails(
   maxEmails: number = 500
 ): Promise<void> {
   console.log(`[${requestId}] 开始检查邮件数量`);
-  const prefix = type === EmailType.SENT ? SENT_EMAIL_PREFIX : RECEIVED_EMAIL_PREFIX;
+  const prefix = getEmailPrefix(type);
   const list = await kv.list({ prefix: prefix });
 
   if (list.keys.length > maxEmails) {
@@ -214,5 +244,34 @@ export async function sendEmail(
   } catch (error) {
     console.error(`[${requestId}] 邮件发送失败:`, error);
     throw error;
+  }
+}
+
+/**
+ * 标星/取消标星邮件
+ */
+export async function toggleStarEmail(
+  kv: KVNamespace,
+  emailId: string,
+  requestId: string
+): Promise<boolean> {
+  // 先检查邮件是否已标星
+  const starredEmail = await getEmailById(kv, emailId, EmailType.STARRED);
+
+  if (starredEmail) {
+    // 如果已标星,则取消标星
+    console.log(`[${requestId}] 取消标星邮件: ${emailId}`);
+    await kv.delete(getEmailKey(emailId, EmailType.STARRED));
+    return false;
+  } else {
+    // 如果未标星,则添加标星
+    const email = await getEmailById(kv, emailId, EmailType.NONE);
+    if (!email) {
+      throw new Error('Email not found');
+    }
+
+    console.log(`[${requestId}] 标星邮件: ${emailId}`);
+    await kv.put(getEmailKey(emailId, EmailType.STARRED), JSON.stringify(email));
+    return true;
   }
 }

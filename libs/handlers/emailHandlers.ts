@@ -74,9 +74,10 @@ export async function handleListEmails(
   const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
 
   try {
-    await emailService.cleanupOldEmails(env.EMAILS, requestId, type);
+    if(type === EmailType.RECEIVED || type === EmailType.SENT){
+      await emailService.cleanupOldEmails(env.EMAILS, requestId, type);
+    }
     const result = await emailService.listEmails(env.EMAILS, page, pageSize, type);
-
     return new Response(
       JSON.stringify({
         emails: result.emails.map((email) => {
@@ -108,7 +109,7 @@ export async function handleListEmails(
  * 处理发送邮件的请求
  * @param request HTTP请求对象
  * @param env 环境变量
- * @param requestId 请��ID，用于日志追踪
+ * @param requestId 请求ID，用于日志追踪
  * @returns HTTP响应，包含发送结果
  */
 export async function handleSendEmail(
@@ -247,6 +248,36 @@ export async function handleDeleteEmail(
     );
   } catch (error) {
     console.error(`[${requestId}] 删除邮件失败:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 处理标星/取消标星邮件的请求
+ */
+export async function handleToggleStar(
+  request: Request,
+  env: Env,
+  requestId: string
+): Promise<Response> {
+  const url = new URL(request.url);
+  const emailId = url.pathname.split('/').slice(-2)[0]; // 获取邮件ID
+
+  try {
+    const isStarred = await emailService.toggleStarEmail(env.EMAILS, emailId, requestId);
+    
+    return new Response(
+      JSON.stringify({
+        message: isStarred ? 'Email starred successfully' : 'Email unstarred successfully',
+        starred: isStarred
+      }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  } catch (error) {
+    console.error(`[${requestId}] 标星/取消标星邮件失败:`, error);
     throw error;
   }
 }

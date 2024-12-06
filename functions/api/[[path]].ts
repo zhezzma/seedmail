@@ -8,7 +8,8 @@ import {
     handleListEmails,
     handleSendEmail,
     handleDeleteEmail,
-    handleGetEmail  // 添加新的导入
+    handleGetEmail,
+    handleToggleStar,
 } from '../../libs/handlers/emailHandlers';
 import { handleListUsers, handleDeleteUser } from '../../libs/handlers/userHandler';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
@@ -54,18 +55,20 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             case url.pathname === '/api/emails' && request.method === 'GET':
                 response = await handleListEmails(request, env, requestId);
                 break;
+            //标星邮件
+            case url.pathname.match(/^\/api\/email\/[\w-]+\/star$/) && request.method === 'POST':
+                response = await handleToggleStar(request, env, requestId);
+                break;
             //获取邮件详情
-            case url.pathname.startsWith('/api/emails/') && request.method === 'GET':
+            case url.pathname.startsWith('/api/email/') && request.method === 'GET':
                 response = await handleGetEmail(request, env, requestId);
                 break;
             //删除邮件
-            case url.pathname.startsWith('/api/emails/') && request.method === 'DELETE': {
+            case url.pathname.startsWith('/api/email/') && request.method === 'DELETE':
                 response = await handleDeleteEmail(request, env, requestId);
                 break;
-            }
-
             //发送邮件
-            case url.pathname === '/api/send' && request.method === 'POST':
+            case url.pathname === '/api/email' && request.method === 'POST':
                 response = await handleSendEmail(request, env, requestId);
                 break;
 
@@ -78,7 +81,6 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             case url.pathname.startsWith('/api/users/') && request.method === 'DELETE':
                 response = await handleDeleteUser(request, env, requestId);
                 break;
-
             default:
                 console.log(`[${requestId}] 未找到匹配的路由`);
                 response = new Response(

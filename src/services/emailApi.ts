@@ -4,7 +4,7 @@ import { API_BASE_URL, getHeaders, handleResponse } from './util';
 
 
 export const emailApi = {
-  async listEmails(type: "received"|"sent", page: number = 1, pageSize: number = 20) {
+  async listEmails(type: "received" | "sent" | "starred", page: number = 1, pageSize: number = 20) {
     const response = await fetch(
       `${API_BASE_URL}/api/emails?type=${type}&page=${page}&pageSize=${pageSize}`,
       { headers: getHeaders() }
@@ -13,7 +13,7 @@ export const emailApi = {
   },
 
   async getEmail(id: string) {
-    const response = await fetch(`${API_BASE_URL}/api/emails/${id}`,
+    const response = await fetch(`${API_BASE_URL}/api/email/${id}`,
       { headers: getHeaders() }
     );
     return handleResponse(response);
@@ -21,7 +21,7 @@ export const emailApi = {
 
   async deleteEmail(id: string) {
     const response = await fetch(
-      `${API_BASE_URL}/api/emails/${id}`,
+      `${API_BASE_URL}/api/email/${id}`,
       { method: 'DELETE', headers: getHeaders() }
     );
     return handleResponse(response);
@@ -29,11 +29,22 @@ export const emailApi = {
 
   async sendEmail(emailData: Partial<EmailRecord>) {
     const response = await fetch(
-      `${API_BASE_URL}/api/send`,
+      `${API_BASE_URL}/api/email`,
       {
         method: 'POST',
         headers: getHeaders(),
         body: JSON.stringify(emailData)
+      }
+    );
+    return handleResponse(response);
+  },
+
+  async toggleStar(id: string) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/email/${id}/star`,
+      { 
+        method: 'POST',
+        headers: getHeaders() 
       }
     );
     return handleResponse(response);

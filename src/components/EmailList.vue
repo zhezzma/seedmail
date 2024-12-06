@@ -5,7 +5,7 @@ import { emailApi } from '../services/emailApi';
 import type { EmailRecord } from '../types/email';
 
 interface Props {
-  type: 'received' | 'sent';
+  type: 'received' | 'sent' | 'starred';
   selectedEmailId?: string | null;
 }
 
@@ -74,6 +74,17 @@ const handleEmailClick = (email: EmailRecord) => {
   emit('selectEmail', email.id);
 };
 
+// 添加标星功能
+const toggleStar = async (email: EmailRecord, event: Event) => {
+  event.stopPropagation();
+  try {
+    await emailApi.toggleStar(email.id);
+    email.starred = !email.starred;
+  } catch (error) {
+    MessagePlugin.error('操作失败');
+  }
+};
+
 // 设置观察器
 const setupObserver = () => {
   const options = {
@@ -121,23 +132,21 @@ onUnmounted(() => {
         'hover:bg-gray-50': props.selectedEmailId !== email.id
       }"
     >
-      <template #header>
-        <div class="flex justify-between items-center w-full">
+      <div class="w-full space-y-2">
+        <!-- 第一行：发件人和标星按钮 -->
+        <div class="flex justify-between items-center">
           <span class="font-medium">{{ email.from }}</span>
-          <span class="text-sm text-gray-500">
-            {{ new Date(email.receivedAt).toLocaleString() }}
-          </span>
+          <button @click="toggleStar(email, $event)" class="text-yellow-400 hover:text-yellow-500">
+            <t-icon :name="email.starred ? 'star-filled' : 'star'" />
+          </button>
         </div>
-      </template>
-      <template #default>
-        <div class="w-full">
-          <div class="font-medium text-gray-900">{{ email.subject }}</div>
-          <div class="text-sm text-gray-500 truncate">
-            {{ email.from }}
-            {{ new Date(email.receivedAt).toLocaleString() }}
-          </div>
+        <!-- 第二行：主题 -->
+        <div class="font-medium text-gray-900">{{ email.subject }}</div>
+        <!-- 第三行：时间 -->
+        <div class="text-sm text-gray-500">
+          {{ new Date(email.receivedAt).toLocaleString() }}
         </div>
-      </template>
+      </div>
     </t-list-item>
 
     <!-- 加载状态和提示 -->

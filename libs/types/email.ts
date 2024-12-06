@@ -23,7 +23,8 @@ export interface EmailRecord {
 export enum EmailType {
   NONE = 'none', //当为none的时候,就是查找所有的邮件
   RECEIVED = 'received',
-  SENT = 'sent'
+  SENT = 'sent',
+  STARRED = 'starred'  // 新增
 }
 
 /**

@@ -7,6 +7,7 @@ export interface EmailRecord {
     spfStatus?: string;
     dmarcStatus?: string;
     dkimStatus?: string;
+    starred?: boolean; // 添加标星状态字段
 }
 
 export interface PaginationResponse<T> {
