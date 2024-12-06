@@ -80,18 +80,7 @@ export async function handleListEmails(
     const result = await emailService.listEmails(env.EMAILS, page, pageSize, type);
     return new Response(
       JSON.stringify({
-        emails: result.emails.map((email) => {
-          return {
-            id: email.id,
-            from: email.from,
-            to: email.to,
-            subject: email.subject,
-            receivedAt: email.receivedAt,
-            spfStatus: email.spfStatus,
-            dmarcStatus: email.dmarcStatus,
-            dkimStatus: email.dkimStatus,
-          };
-        }),
+        emails: result.emails,
         total: result.total,
         page,
         pageSize,

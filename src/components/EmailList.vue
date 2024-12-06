@@ -122,55 +122,41 @@ onUnmounted(() => {
 
 <template>
   <t-list class="h-full overflow-y-auto">
-    <t-list-item
-      v-for="email in emails"
-      :key="email.id"
-      @click="handleEmailClick(email)"
-      class="cursor-pointer transition-colors duration-200"
-      :class="{
+    <t-list-item v-for="email in emails" :key="email.id" @click="handleEmailClick(email)"
+      class="cursor-pointer transition-colors duration-200 p-4 border-b border-gray-200" :class="{
         'bg-gray-50 hover:bg-gray-100': props.selectedEmailId === email.id,
         'hover:bg-gray-50': props.selectedEmailId !== email.id
-      }"
-    >
+      }">
       <div class="w-full space-y-2">
         <!-- 第一行：发件人和标星按钮 -->
-        <div class="flex justify-between items-center">
-          <span class="font-medium">{{ email.from }}</span>
+        <div class="font-medium truncate" title="{{ email.from }}"> {{ email.from }} </div>
+        <!-- 第二行：主题 -->
+        <div class="font-medium text-gray-900 truncate" title="{{ email.subject }}">{{ email.subject }}</div>
+        <!-- 第三行：时间 -->
+        <div class="flex justify-between items-center text-sm text-gray-500">
+          <div>
+            {{ new Date(email.receivedAt).toLocaleString() }}
+          </div>
           <button @click="toggleStar(email, $event)" class="text-yellow-400 hover:text-yellow-500">
             <t-icon :name="email.starred ? 'star-filled' : 'star'" />
           </button>
-        </div>
-        <!-- 第二行：主题 -->
-        <div class="font-medium text-gray-900">{{ email.subject }}</div>
-        <!-- 第三行：时间 -->
-        <div class="text-sm text-gray-500">
-          {{ new Date(email.receivedAt).toLocaleString() }}
         </div>
       </div>
     </t-list-item>
 
     <!-- 加载状态和提示 -->
-    <div 
-      v-if="loading || hasMore" 
-      class="loading-more py-4 text-center text-gray-500"
-    >
+    <div v-if="loading || hasMore" class="loading-more py-4 text-center text-gray-500">
       <template v-if="loading">加载中...</template>
       <template v-else>上拉加载更多</template>
     </div>
 
     <!-- 无更多数据提示 -->
-    <div 
-      v-if="!hasMore && emails.length > 0" 
-      class="py-4 text-center text-gray-500"
-    >
+    <div v-if="!hasMore && emails.length > 0" class="py-4 text-center text-gray-500">
       没有更多数据了
     </div>
 
     <!-- 空状态提示 -->
-    <div 
-      v-if="!loading && emails.length === 0" 
-      class="py-4 text-center text-gray-500"
-    >
+    <div v-if="!loading && emails.length === 0" class="py-4 text-center text-gray-500">
       暂无数据
     </div>
   </t-list>
@@ -180,4 +166,6 @@ onUnmounted(() => {
 :deep(.t-list-item) {
   padding: 16px;
 }
+
+
 </style>
