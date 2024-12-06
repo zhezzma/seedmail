@@ -146,9 +146,11 @@ onUnmounted(() => {
       }">
       <div class="w-full space-y-2">
         <!-- 第一行：发件人和标星按钮 -->
-        <div class="font-medium truncate" title="{{ email.from }}"> {{ email.from }} </div>
+        <div class="font-medium truncate" :title="props.type === 'sent' ? email.to : email.from"> {{ props.type ===
+          "sent" ? email.to : email.from }}
+        </div>
         <!-- 第二行：主题 -->
-        <div class="font-medium text-gray-900 truncate" title="{{ email.subject }}">{{ email.subject }}</div>
+        <div class="font-medium text-gray-900 truncate" :title="email.subject">{{ email.subject }}</div>
         <!-- 第三行：时间和删除按钮 -->
         <div class="flex justify-between items-center text-sm text-gray-500">
           <div>
