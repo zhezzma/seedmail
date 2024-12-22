@@ -11,6 +11,9 @@
  * @property {Object.<string, string>} headers - 邮件头信息
  * @property {number} size - 邮件大小(字节)
  * @property {string} rawEmail - 原始邮件内容 base64 编码
+ * @property {number} starred - 标记星标
+ * @property {string} type - 邮件类型
+ * @property {number} readed - 已读
  */
 
 /**
@@ -50,18 +53,45 @@ export async function emailHandler(message, env, ctx) {
       headers: Object.fromEntries(message.headers.entries()),
       size: message.rawSize,
       rawEmail: rawBase64, // base64 编码的原始邮件内容
+      starred: 0,
+      type: "received",
+      readed: 0
     };
 
-    const USERS_KEY = 'users';
-    const EMAIL_PREFIX = 'received:';
-    // 存储邮件数据到 KV
-    await env.EMAILS.put(`${EMAIL_PREFIX}${emailId}`, JSON.stringify(emailData));
-    // 存储收件人到 kv
-    /** @type {string[]} */
-    const users = await env.EMAILS.get(USERS_KEY, 'json') || [];
-    if (!users.includes(message.to)) {
-      users.push(message.to);
-      await env.EMAILS.put(USERS_KEY, JSON.stringify(users));
+
+    // 存储邮件数据到 D1,from和to是保留关键字所以加上引号
+    await env.DB.prepare(
+      `INSERT INTO emails (
+        id, "from", "to", subject, received_at, 
+        spf_status, dmarc_status, dkim_status, headers, 
+        size, raw_email, starred, type, readed
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    ).bind(
+      emailData.id,
+      emailData.from,
+      emailData.to,
+      emailData.subject,
+      emailData.receivedAt,
+      emailData.spfStatus,
+      emailData.dmarcStatus,
+      emailData.dkimStatus,
+      JSON.stringify(emailData.headers),
+      emailData.size,
+      emailData.rawEmail,
+      emailData.starred,
+      emailData.type,
+      emailData.readed
+    ).run();
+
+    // 检查用户是否存在，不存在则添加
+    const user = await env.DB.prepare(
+      "SELECT email FROM users WHERE email = ?"
+    ).bind(message.to).first();
+
+    if (!user) {
+      await env.DB.prepare(
+        "INSERT INTO users (email, created_at) VALUES (?, ?)"
+      ).bind(message.to, new Date().toISOString()).run();
     }
 
     // 转发邮件

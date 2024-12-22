@@ -36,7 +36,7 @@ const getTitle = () => {
     case 'received':
       return '收件箱';
     case 'sent':
-      return '发件箱';
+      return '已发邮件';
     case 'starred':
       return '星标邮件';
   }
