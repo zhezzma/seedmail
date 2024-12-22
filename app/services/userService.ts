@@ -1,6 +1,6 @@
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
-import { users } from '../../app/db/schema';
+import { users } from '../db/schema';
 import { D1Database } from '@cloudflare/workers-types';
 
 /**

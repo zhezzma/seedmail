@@ -2,11 +2,11 @@ import { D1Database } from '@cloudflare/workers-types';
 import { EmailRecord, EmailSendRequest, EmailType } from '../types/email';
 import { CreateEmailResponse, Resend } from 'resend';
 import { Buffer } from 'node:buffer';
-import { emails } from '../../app/db/schema';
+import { emails } from '../db/schema';
 import { eq, desc, and, sql } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import { updateUsersList } from './userService';
-
+import * as crypto from 'node:crypto'
 /**
  * 存储收到的邮件记录
  */
