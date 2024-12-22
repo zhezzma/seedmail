@@ -8,6 +8,7 @@ export interface EmailRecord {
     dmarcStatus?: string;
     dkimStatus?: string;
     starred?: boolean; // 添加标星状态字段
+    readed: boolean; // 添加已读状态字段
 }
 
 export interface PaginationResponse<T> {

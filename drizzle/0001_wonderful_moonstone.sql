@@ -1,0 +1,1 @@
+ALTER TABLE `emails` ADD `readed` integer DEFAULT 0 NOT NULL;

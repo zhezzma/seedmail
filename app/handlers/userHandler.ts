@@ -14,7 +14,7 @@ export async function handleListUsers(
   const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
 
   try {
-    const result = await userService.listUsers(env.EMAILS, page, pageSize);
+    const result = await userService.listUsers(env.DB, page, pageSize);
 
     return new Response(
       JSON.stringify({
@@ -54,7 +54,7 @@ export async function handleDeleteUser(
   }
 
   try {
-    const success = await userService.deleteUser(env.EMAILS, email);
+    const success = await userService.deleteUser(env.DB, email);
     
     if (!success) {
       return new Response(

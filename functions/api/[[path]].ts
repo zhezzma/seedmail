@@ -1,8 +1,8 @@
 import { EventContext } from '@cloudflare/workers-types'
-import { Env } from '../../libs/types/email';
-import { authMiddleware } from '../../libs/middleware/auth';
-import { handleOptions, addCorsHeaders } from '../../libs/utils/cors';
-import { handleLogin } from '../../libs/handlers/authHandlers';
+import { Env } from '../../app/types/email';
+import { authMiddleware } from '../../app/middleware/auth';
+import { handleOptions, addCorsHeaders } from '../../app/utils/cors';
+import { handleLogin } from '../../app/handlers/authHandlers';
 import {
     handleStoreEmail,
     handleListEmails,
@@ -10,8 +10,9 @@ import {
     handleDeleteEmail,
     handleGetEmail,
     handleToggleStar,
-} from '../../libs/handlers/emailHandlers';
-import { handleListUsers, handleDeleteUser } from '../../libs/handlers/userHandler';
+    handleBatchDeleteEmails
+} from '../../app/handlers/emailHandlers';
+import { handleListUsers, handleDeleteUser } from '../../app/handlers/userHandler';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
 
     const request = context.request;
@@ -71,12 +72,14 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             case url.pathname === '/api/email' && request.method === 'POST':
                 response = await handleSendEmail(request, env, requestId);
                 break;
-
+            //批量删除邮件
+            case url.pathname === '/api/emails/batch' && request.method === 'DELETE':
+                response = await handleBatchDeleteEmails(request, env, requestId);
+                break;
             //获取邮箱列表
             case url.pathname === '/api/users' && request.method === 'GET':
                 response = await handleListUsers(request, env, requestId);
                 break;
-
             //删除用户
             case url.pathname.startsWith('/api/users/') && request.method === 'DELETE':
                 response = await handleDeleteUser(request, env, requestId);

@@ -3,6 +3,7 @@ import * as emailService from '../services/emailService';
 import PostalMime from 'postal-mime';
 import { Buffer } from 'node:buffer';
 
+
 /**
  * 处理存储邮件的请求
  * @param request HTTP请求对象
@@ -32,7 +33,7 @@ export async function handleStoreEmail(
 
   const email = await request.json() as EmailRecord;
   try {
-    await emailService.storeEmail(env.EMAILS, email, requestId);
+    await emailService.storeEmail(env.DB, email, requestId);
 
     return new Response(
       JSON.stringify({
@@ -63,21 +64,25 @@ export async function handleListEmails(
   env: Env,
   requestId: string
 ): Promise<Response> {
-
   const url = new URL(request.url);
-  const type = url.searchParams.get('type') as EmailType || EmailType.NONE;
-  if (type === EmailType.NONE) {
-    throw new Error('type不能为空');
+  const type = url.searchParams.get('type') as EmailType | 'starred';
+
+  if (!type || (type !== EmailType.RECEIVED && type !== EmailType.SENT && type !== 'starred')) {
+    return new Response(
+      JSON.stringify({ error: 'Invalid type parameter' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
   }
+
   // 解析分页参数
   const page = parseInt(url.searchParams.get('page') || '1');
   const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
 
   try {
-    if(type === EmailType.RECEIVED || type === EmailType.SENT){
-      await emailService.cleanupOldEmails(env.EMAILS, requestId, type);
-    }
-    const result = await emailService.listEmails(env.EMAILS, page, pageSize, type);
+    const result = await emailService.listEmails(env.DB, page, pageSize, type);
     return new Response(
       JSON.stringify({
         emails: result.emails,
@@ -126,7 +131,7 @@ export async function handleSendEmail(
     }
 
     const result = await emailService.sendEmail(
-      env.EMAILS,
+      env.DB,
       env.RESEND_KEY,
       emailData,
       requestId
@@ -172,10 +177,10 @@ export async function handleGetEmail(
 ): Promise<Response> {
   const url = new URL(request.url);
   const emailId = url.pathname.split('/').pop()!;
-  const type = url.searchParams.get('type') as EmailType || EmailType.NONE;
+
 
   try {
-    const email = await emailService.getEmailById(env.EMAILS, emailId, type);
+    const email = await emailService.getEmailById(env.DB, emailId);
 
     if (!email) {
       return new Response(
@@ -212,9 +217,7 @@ export async function handleDeleteEmail(
 ): Promise<Response> {
 
   const url = new URL(request.url);
-  const kv = env.EMAILS;
   const emailId = url.pathname.split('/').pop()!;
-  const type = url.searchParams.get('type') as EmailType || EmailType.NONE;
 
   if (!emailId) {
     return new Response(
@@ -227,7 +230,7 @@ export async function handleDeleteEmail(
   }
 
   try {
-    await emailService.deleteEmail(env.EMAILS, emailId, type);
+    await emailService.deleteEmail(env.DB, emailId);
     return new Response(
       JSON.stringify({ message: 'User deleted successfully' }),
       {
@@ -253,7 +256,7 @@ export async function handleToggleStar(
   const emailId = url.pathname.split('/').slice(-2)[0]; // 获取邮件ID
 
   try {
-    const isStarred = await emailService.toggleStarEmail(env.EMAILS, emailId, requestId);
+    const isStarred = await emailService.toggleStarEmail(env.DB, emailId, requestId);
     
     return new Response(
       JSON.stringify({
@@ -267,6 +270,42 @@ export async function handleToggleStar(
     );
   } catch (error) {
     console.error(`[${requestId}] 标星/取消标星邮件失败:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 处理批量删除邮件的请求
+ */
+export async function handleBatchDeleteEmails(
+  request: Request,
+  env: Env,
+  requestId: string
+): Promise<Response> {
+  try {
+    const { ids } = await request.json() as { ids: string[] };
+
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Invalid email ids' }),
+        {
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    await emailService.batchDeleteEmails(env.DB, ids);
+
+    return new Response(
+      JSON.stringify({ message: 'Emails deleted successfully' }),
+      {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  } catch (error) {
+    console.error(`[${requestId}] 批量删除邮件失败:`, error);
     throw error;
   }
 }

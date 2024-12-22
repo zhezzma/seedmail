@@ -18,3 +18,11 @@ vars = {}  # 不要在这里写入实际值 设置在网站上
 kv_namespaces = [
   { binding = "EMAILS", id = "b7b8e7fb4eab40eabd3dcb1c1feea2cf" }
 ]
+
+
+
+[[d1_databases]]
+binding = "DB"
+migrations_dir = "drizzle"
+database_name = "seedmail"
+database_id = "c529e455-d749-458c-9e8b-f0611bec7572"

@@ -39,6 +39,21 @@ const toggleMenu = () => {
 };
 
 
+
+//解析token
+const parseToken = () => {
+  try {
+    const token = localStorage.getItem('token') as string;
+    const [, payload] = token.split('.');
+    const data = JSON.parse(atob(payload));
+    return data;
+  } catch (error) {
+    return null;
+  }
+};
+const jwtToken = parseToken();
+
+
 const handleCompose = () => {
   router.push('/compose');
 };
@@ -89,7 +104,6 @@ const handleCompose = () => {
     </t-aside>
 
     <t-layout class="w-full">
-      <!-- 修改后的头部 -->
       <t-header class="header backdrop-blur-xl border-b border-gray-100">
         <div class="flex items-center justify-between h-full  px-4 lg:px-8">
           <!-- 移动端菜单按钮 -->
@@ -97,21 +111,25 @@ const handleCompose = () => {
             <t-button theme="default" variant="text" class="lg:hidden" @click="toggleMenu">
               <t-icon name="menu" size="24px" />
             </t-button>
-            <!-- <h1
+            <h1
               class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+              {{ jwtToken?.sub }}的邮箱
+            </h1>
 
-            </h1> -->
+          </div>
+          <div class="flex items-center gap-4">
             <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
               <template #icon>
                 <t-icon name="edit" />
               </template>
               写邮件
             </t-button>
+            <t-button theme="danger" @click="logout" class="logout-btn">
+              <t-icon name="logout" class="mr-2" />
+              <span class="hidden sm:inline">退出登录</span>
+            </t-button>
           </div>
-          <t-button theme="danger" variant="text" @click="logout" class="logout-btn">
-            <t-icon name="logout" class="mr-2" />
-            <span class="hidden sm:inline">退出登录</span>
-          </t-button>
+
         </div>
       </t-header>
 

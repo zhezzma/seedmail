@@ -11,7 +11,6 @@ export const emailApi = {
     );
     return handleResponse(response);
   },
-
   async getEmail(id: string) {
     const response = await fetch(`${API_BASE_URL}/api/email/${id}`,
       { headers: getHeaders() }
@@ -23,6 +22,18 @@ export const emailApi = {
     const response = await fetch(
       `${API_BASE_URL}/api/email/${id}`,
       { method: 'DELETE', headers: getHeaders() }
+    );
+    return handleResponse(response);
+  },
+
+  async deleteEmails(ids: string[]) {
+    const response = await fetch(
+      `${API_BASE_URL}/api/emails/batch`,
+      { 
+        method: 'DELETE', 
+        headers: getHeaders(),
+        body: JSON.stringify({ ids })
+      }
     );
     return handleResponse(response);
   },
