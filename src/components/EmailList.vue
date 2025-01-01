@@ -30,6 +30,10 @@ const isSelecting = ref(false);
 // 添加全选状态管理
 const selectState = ref<'none' | 'all' | 'partial'>('none');
 
+// 添加对话框相关的状态
+const showDeleteConfirm = ref(false);
+const selectedStarredCount = ref(0);
+
 // 获取标题
 const getTitle = () => {
   switch (props.type) {
@@ -181,15 +185,32 @@ const handleDelete = async (id: string) => {
   }
 };
 
-// 添加批量删除方法
+// 修改批量删除方法
 const handleBatchDelete = async () => {
   if (selectedEmails.value.size === 0) return;
 
+  // 检查是否包含星标邮件
+  const starredEmails = emails.value.filter(
+    email => selectedEmails.value.has(email.id) && email.starred
+  );
+  
+  if (starredEmails.length > 0) {
+    selectedStarredCount.value = starredEmails.length;
+    showDeleteConfirm.value = true;
+    return;
+  }
+
+  await executeDelete();
+};
+
+// 添加实际执行删除的方法
+const executeDelete = async () => {
   try {
     await emailApi.deleteEmails(Array.from(selectedEmails.value));
     MessagePlugin.success('批量删除成功');
     selectedEmails.value.clear();
     isSelecting.value = false;
+    showDeleteConfirm.value = false;
     fetchEmails(1);
   } catch (error) {
     MessagePlugin.error('批量删除失败');
@@ -334,6 +355,16 @@ onUnmounted(() => {
         暂无数据
       </div>
     </t-list>
+
+    <!-- 添加确认对话框 -->
+    <t-dialog
+      header="确认删除"
+      :visible="showDeleteConfirm"
+      @confirm="executeDelete"
+      @close="showDeleteConfirm = false"
+    >
+      <p>选中的邮件中包含 {{ selectedStarredCount }} 个星标邮件，是否确认删除？</p>
+    </t-dialog>
   </div>
 </template>
 
