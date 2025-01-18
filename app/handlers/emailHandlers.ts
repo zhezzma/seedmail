@@ -310,7 +310,7 @@ export async function handleGetLatestEmail(
   const url = new URL(request.url);
   const to = url.searchParams.get('to');
   const from = url.searchParams.get('from');
-  const timestamp = url.searchParams.get('timestamp');
+  const timestamp = url.searchParams.get('timestamp');  //秒级的时间戳..
 
   if (!to || !from || !timestamp) {
     return new Response(
@@ -328,7 +328,7 @@ export async function handleGetLatestEmail(
       to,
       from,
       parseInt(timestamp)
-    );
+    ); 
 
     if (!email) {
       return new Response(
