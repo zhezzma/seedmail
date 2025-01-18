@@ -61,5 +61,5 @@ export async function deleteUser(
 ): Promise<boolean> {
   const d1 = drizzle(db);
   const result = await d1.delete(users).where(eq(users.email, email)).execute();
-  return result.length > 0;
+  return result.success;
 }
