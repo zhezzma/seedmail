@@ -8,7 +8,7 @@ export interface EmailRecord {
     from: string;          // 发件人
     to: string;           // 收件人
     subject: string;      // 邮件主题
-    receivedAt: string;   // 接收时间
+    receivedAt: string;   // 接收时间   //2023-01-01T00:00:00Z  ISO 8601格式
     spfStatus: string;    // SPF 验证状态
     dmarcStatus: string;  // DMARC 验证状态
     dkimStatus: string;   // DKIM 验证状态

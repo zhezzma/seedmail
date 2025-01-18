@@ -1,6 +1,6 @@
 import { EventContext } from '@cloudflare/workers-types'
 import { Env } from '../../app/types/email';
-import { authMiddleware } from '../../app/middleware/auth';
+import { authApiToken, authMiddleware } from '../../app/middleware/auth';
 import { handleOptions, addCorsHeaders } from '../../app/utils/cors';
 import { handleLogin } from '../../app/handlers/authHandlers';
 import {
@@ -10,7 +10,8 @@ import {
     handleDeleteEmail,
     handleGetEmail,
     handleToggleStar,
-    handleBatchDeleteEmails
+    handleBatchDeleteEmails,
+    handleGetLatestEmail
 } from '../../app/handlers/emailHandlers';
 import { handleListUsers, handleDeleteUser } from '../../app/handlers/userHandler';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
@@ -39,7 +40,23 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
 
         //接收邮件
         if (url.pathname === '/api/received' && request.method === 'POST') {
+
+            const authResponse = await authApiToken(request, env, requestId);
+            if (authResponse) {
+                return addCorsHeaders(authResponse);
+            }
+
             const response = await handleStoreEmail(request, env, requestId);
+            return addCorsHeaders(response);
+        }
+
+        //根据收发件人和时间戳获取邮件..一般用于获得验证码之类的
+        if (url.pathname === '/api/latest-email' && request.method === 'GET') {
+            const authResponse = await authApiToken(request, env, requestId);
+            if (authResponse) {
+                return addCorsHeaders(authResponse);
+            }
+            const response = await handleGetLatestEmail(request, env, requestId);
             return addCorsHeaders(response);
         }
 

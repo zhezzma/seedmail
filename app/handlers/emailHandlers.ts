@@ -18,18 +18,7 @@ export async function handleStoreEmail(
 ): Promise<Response> {
   console.log(`[${requestId}] 开始处理存储邮件请求`);
 
-  // 验证API令牌
-  const authHeader = request.headers.get('Authorization');
-  if (authHeader !== `Bearer ${env.API_TOKEN}`) {
-    console.warn(`[${requestId}] API Token验证失败`);
-    return new Response(
-      JSON.stringify({ error: 'Unauthorized' }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
-  }
+
 
   const email = await request.json() as EmailRecord;
   try {
@@ -257,7 +246,7 @@ export async function handleToggleStar(
 
   try {
     const isStarred = await emailService.toggleStarEmail(env.DB, emailId, requestId);
-    
+
     return new Response(
       JSON.stringify({
         message: isStarred ? 'Email starred successfully' : 'Email unstarred successfully',
@@ -306,6 +295,62 @@ export async function handleBatchDeleteEmails(
     );
   } catch (error) {
     console.error(`[${requestId}] 批量删除邮件失败:`, error);
+    throw error;
+  }
+}
+
+/**
+ * 获取指定条件的最新邮件
+ */
+export async function handleGetLatestEmail(
+  request: Request,
+  env: Env,
+  requestId: string
+): Promise<Response> {
+  const url = new URL(request.url);
+  const to = url.searchParams.get('to');
+  const from = url.searchParams.get('from');
+  const timestamp = url.searchParams.get('timestamp');
+
+  if (!to || !from || !timestamp) {
+    return new Response(
+      JSON.stringify({ error: 'Missing required parameters' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  try {
+    const email = await emailService.getLatestEmailByCondition(
+      env.DB,
+      to,
+      from,
+      parseInt(timestamp)
+    );
+
+    if (!email) {
+      return new Response(
+        JSON.stringify({ error: 'Email not found' }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const { rawEmail } = email;
+    const binaryData = Buffer.from(rawEmail, 'base64');
+    const parsed = await PostalMime.parse(binaryData);
+    const result = { id: email.id, ...parsed };
+
+    return new Response(
+      JSON.stringify(result),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error(`[${requestId}] 获取指定邮件失败:`, error);
     throw error;
   }
 }

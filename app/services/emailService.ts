@@ -207,3 +207,34 @@ export async function toggleStarEmail(
 
   return newStarred === 1;
 }
+
+/**
+ * 根据发件人、收件人和时间戳获取最新的邮件
+ */
+export async function getLatestEmailByCondition(
+  db: D1Database,
+  to: string,
+  from: string,
+  timestamp: number
+): Promise<EmailRecord | null> {
+  const d1 = drizzle(db);
+  
+  const result = await d1.select()
+    .from(emails)
+    .where(and(
+      eq(emails.to, to),
+      eq(emails.from, from),
+      // 将 receivedAt 转换为时间戳进行比较
+      sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
+    ))
+    .orderBy(desc(emails.receivedAt))
+    .limit(1)
+    .get();
+
+  if (!result) return null;
+
+  return {
+    ...result,
+    headers: JSON.parse(result.headers)
+  } as EmailRecord;
+}
