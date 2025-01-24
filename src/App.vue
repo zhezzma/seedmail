@@ -105,31 +105,30 @@ const handleCompose = () => {
 
     <t-layout class="w-full">
       <t-header class="header backdrop-blur-xl border-b border-gray-100">
-        <div class="flex items-center justify-between h-full  px-4 lg:px-8">
-          <!-- 移动端菜单按钮 -->
-          <div class="flex items-center gap-4">
-            <t-button theme="default" variant="text" class="lg:hidden" @click="toggleMenu">
-              <t-icon name="menu" size="24px" />
+        <div class="flex items-center justify-between h-full px-2 sm:px-4 lg:px-8">
+          <!-- 移动端菜单按钮和标题 -->
+          <div class="flex items-center gap-2 sm:gap-4">
+            <t-button theme="default" variant="text" class="lg:hidden min-w-[40px]" @click="toggleMenu">
+              <t-icon name="menu" size="20px" sm:size="24px" />
             </t-button>
-            <h1
-              class="text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent">
+            <h1 class="text-base sm:text-xl lg:text-2xl font-bold bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent truncate max-w-[150px] sm:max-w-full">
               {{ jwtToken?.sub }}的邮箱
             </h1>
-
           </div>
-          <div class="flex items-center gap-4">
-            <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow">
+          <div class="flex items-center gap-2 sm:gap-4">
+            <t-button theme="primary" @click="handleCompose" class="shadow-md hover:shadow-lg transition-shadow text-sm sm:text-base py-1 px-2 sm:px-4">
               <template #icon>
-                <t-icon name="edit" />
+                <t-icon name="edit" class="text-sm sm:text-base" />
               </template>
-              写邮件
+              <span>写邮件</span>
             </t-button>
-            <t-button theme="danger" @click="logout" class="logout-btn">
-              <t-icon name="logout" class="mr-2" />
-              <span class="hidden sm:inline">退出登录</span>
+            <t-button theme="danger" @click="logout" class="logout-btn text-sm sm:text-base py-1 px-2 sm:px-4">
+              <template #icon>
+                <t-icon name="logout" class="text-sm sm:text-base" />
+              </template>
+              <span>退出</span>
             </t-button>
           </div>
-
         </div>
       </t-header>
 
@@ -229,4 +228,7 @@ const handleCompose = () => {
 .drawer-menu {
   @apply bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800;
 }
+
+
+
 </style>
