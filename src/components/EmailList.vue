@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { MessagePlugin } from 'tdesign-vue-next';
 import { emailApi } from '../services/emailApi';
 import type { EmailRecord } from '../types/email';
@@ -33,6 +33,12 @@ const selectState = ref<'none' | 'all' | 'partial'>('none');
 // 添加对话框相关的状态
 const showDeleteConfirm = ref(false);
 const selectedStarredCount = ref(0);
+
+// 添加提示音文件
+const audio = new Audio('/notification.wav');
+
+// 添加一个变量保存最新邮件的时间戳
+const latestEmailTime = ref<string>('');
 
 // 获取标题
 const getTitle = () => {
@@ -93,7 +99,7 @@ function debounce(fn: Function, delay: number) {
   };
 }
 
-// 获取邮件列表
+// 修改 fetchEmails 方法
 const fetchEmails = async (page: number = 1) => {
   if (loading.value || (!hasMore.value && page > 1)) return;
 
@@ -104,6 +110,19 @@ const fetchEmails = async (page: number = 1) => {
       page,
       pageSize.value
     );
+
+    // 检查是否有新邮件 (仅在收件箱和第一页时检查)
+    if (props.type === 'received' && page === 1 && response.emails.length > 0) {
+      const newLatestEmail = response.emails[0];
+      
+      // 如果有最新邮件记录，且新获取的邮件比已记录的更新，则播放提示音
+      if (latestEmailTime.value && new Date(newLatestEmail.receivedAt) > new Date(latestEmailTime.value)) {
+        audio.play();
+      }
+      
+      // 更新最新邮件时间
+      latestEmailTime.value = newLatestEmail.receivedAt;
+    }
 
     if (page === 1) {
       emails.value = response.emails;
@@ -255,6 +274,26 @@ onMounted(() => {
 onUnmounted(() => {
   if (observer) {
     observer.disconnect();
+  }
+});
+
+// 监听type属性变化
+let refreshInterval: NodeJS.Timeout | null = null;
+watch(() => props.type, (newType) => {
+  if (newType === 'received') {
+    // 启动自动刷新
+    refreshInterval = setInterval(() => fetchEmails(1), 15000); // 每30秒刷新一次
+  } else {
+    // 清除自动刷新
+    if (refreshInterval) {
+      clearInterval(refreshInterval);
+    }
+  }
+}, { immediate: true });
+
+onUnmounted(() => {
+  if (refreshInterval) {
+    clearInterval(refreshInterval);
   }
 });
 </script>
