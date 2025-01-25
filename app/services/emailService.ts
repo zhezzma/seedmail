@@ -208,59 +208,61 @@ export async function toggleStarEmail(
   return newStarred === 1;
 }
 
-
 /**
- * 根据发件人、收件人和时间戳获取最新的邮件（D1兼容版本）
+ * 根据发件人、收件人和时间戳获取最新的邮件
  */
 export async function getLatestEmailByCondition(
   db: D1Database,
   to: string,
   from: string,
-  timestamp: number
+  timestamp: number,
+  fuzzy: boolean = false
 ): Promise<EmailRecord | null> {
   const d1 = drizzle(db);
   
-  // D1/SQLite专用转义处理
-  const escapeSQLiteLike = (str: string) => str.replace(/[\\%_]/g, '\\$&');
-  const toPattern = `%${escapeSQLiteLike(to)}%`;
-  const fromPattern = `%${escapeSQLiteLike(from)}%`;
-
+  const toCondition = fuzzy ? like(emails.to, `%${to}%`) : eq(emails.to, to);
+  const fromCondition = fuzzy ? like(emails.from, `%${from}%`) : eq(emails.from, from);
+  
   const result = await d1.select()
     .from(emails)
     .where(and(
-      // 使用SQLite的NOCASE校对规则
-      sql`${emails.to} LIKE ${toPattern} ESCAPE '\\' COLLATE NOCASE`,
-      sql`${emails.from} LIKE ${fromPattern} ESCAPE '\\' COLLATE NOCASE`,
+      toCondition,
+      fromCondition,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))
     .limit(1)
     .get();
 
-  return result ? { ...result, headers: JSON.parse(result.headers) } as EmailRecord : null;
+  if (!result) return null;
+
+  return {
+    ...result,
+    headers: JSON.parse(result.headers)
+  } as EmailRecord;
 }
 
 /**
- * 根据发件人、收件人和时间戳获取多条邮件（D1兼容版本）
+ * 根据发件人、收件人和时间戳获取多条邮件
  */
 export async function getEmailsByCondition(
   db: D1Database,
   to: string,
   from: string,
   timestamp: number,
-  limit: number = 10
+  limit: number = 10,
+  fuzzy: boolean = false
 ): Promise<EmailRecord[]> {
   const d1 = drizzle(db);
   
-  const escapeSQLiteLike = (str: string) => str.replace(/[\\%_]/g, '\\$&');
-  const toPattern = `%${escapeSQLiteLike(to)}%`;
-  const fromPattern = `%${escapeSQLiteLike(from)}%`;
-
+  const toCondition = fuzzy ? like(emails.to, `%${to}%`) : eq(emails.to, to);
+  const fromCondition = fuzzy ? like(emails.from, `%${from}%`) : eq(emails.from, from);
+  
   const results = await d1.select()
     .from(emails)
     .where(and(
-      sql`${emails.to} LIKE ${toPattern} ESCAPE '\\' COLLATE NOCASE`,
-      sql`${emails.from} LIKE ${fromPattern} ESCAPE '\\' COLLATE NOCASE`,
+      toCondition,
+      fromCondition,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))

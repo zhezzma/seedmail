@@ -310,49 +310,24 @@ export async function handleGetLatestEmail(
   const url = new URL(request.url);
   const to = url.searchParams.get('to');
   const from = url.searchParams.get('from');
-  const timestamp = url.searchParams.get('timestamp');  //秒级的时间戳..
+  const timestamp = Number(url.searchParams.get('timestamp'));
+  const fuzzy = url.searchParams.get('fuzzy') === 'true' || url.searchParams.get('fuzzy') === '1';
 
   if (!to || !from || !timestamp) {
-    return new Response(
-      JSON.stringify({ error: 'Missing required parameters' }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response('Missing required parameters', { status: 400 });
   }
 
-  try {
-    const email = await emailService.getLatestEmailByCondition(
-      env.DB,
-      to,
-      from,
-      parseInt(timestamp)
-    ); 
+  const email = await emailService.getLatestEmailByCondition(
+    env.DB,
+    to,
+    from,
+    timestamp,
+    fuzzy
+  );
 
-    if (!email) {
-      return new Response(
-        JSON.stringify({ error: 'Email not found' }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const { rawEmail } = email;
-    const binaryData = Buffer.from(rawEmail, 'base64');
-    const parsed = await PostalMime.parse(binaryData);
-    const result = { id: email.id, ...parsed };
-
-    return new Response(
-      JSON.stringify(result),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error(`[${requestId}] 获取指定邮件失败:`, error);
-    throw error;
-  }
+  return new Response(JSON.stringify(email), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
 
 /**
@@ -366,52 +341,24 @@ export async function handleGetEmails(
   const url = new URL(request.url);
   const to = url.searchParams.get('to');
   const from = url.searchParams.get('from');
-  const timestamp = url.searchParams.get('timestamp');
-  const limit = url.searchParams.get('limit');
+  const timestamp = Number(url.searchParams.get('timestamp'));
+  const limit = Number(url.searchParams.get('limit')) || 10;
+  const fuzzy = url.searchParams.get('fuzzy') === 'true' || url.searchParams.get('fuzzy') === '1';
 
   if (!to || !from || !timestamp) {
-    return new Response(
-      JSON.stringify({ error: 'Missing required parameters' }),
-      {
-        status: 400,
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
+    return new Response('Missing required parameters', { status: 400 });
   }
 
-  try {
-    const emails = await emailService.getEmailsByCondition(
-      env.DB,
-      to,
-      from,
-      parseInt(timestamp),
-      limit ? parseInt(limit) : undefined
-    );
+  const emails = await emailService.getEmailsByCondition(
+    env.DB,
+    to,
+    from,
+    timestamp,
+    limit,
+    fuzzy
+  );
 
-    if (emails.length === 0) {
-      return new Response(
-        JSON.stringify({ message: 'No emails found' }),
-        {
-          status: 404,
-          headers: { 'Content-Type': 'application/json' }
-        }
-      );
-    }
-
-    const results = await Promise.all(
-      emails.map(async (email) => {
-        const binaryData = Buffer.from(email.rawEmail, 'base64');
-        const parsed = await PostalMime.parse(binaryData);
-        return { id: email.id, ...parsed };
-      })
-    );
-
-    return new Response(
-      JSON.stringify(results),
-      { headers: { 'Content-Type': 'application/json' } }
-    );
-  } catch (error) {
-    console.error(`[${requestId}] 获取指定邮件失败:`, error);
-    throw error;
-  }
+  return new Response(JSON.stringify(emails), {
+    headers: { 'Content-Type': 'application/json' },
+  });
 }
