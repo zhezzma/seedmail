@@ -11,7 +11,8 @@ import {
     handleGetEmail,
     handleToggleStar,
     handleBatchDeleteEmails,
-    handleGetLatestEmail
+    handleGetLatestEmail,
+    handleGetEmails
 } from '../../app/handlers/emailHandlers';
 import { handleListUsers, handleDeleteUser } from '../../app/handlers/userHandler';
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
@@ -57,6 +58,16 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
                 return addCorsHeaders(authResponse);
             }
             const response = await handleGetLatestEmail(request, env, requestId);
+            return addCorsHeaders(response);
+        }
+
+        //根据收发件人和时间戳获取多条邮件
+        if (url.pathname === '/api/find-emails' && request.method === 'GET') {
+            const authResponse = await authApiToken(request, env, requestId);
+            if (authResponse) {
+                return addCorsHeaders(authResponse);
+            }
+            const response = await handleGetEmails(request, env, requestId);
             return addCorsHeaders(response);
         }
 

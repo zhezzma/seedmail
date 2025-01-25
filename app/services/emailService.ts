@@ -238,3 +238,31 @@ export async function getLatestEmailByCondition(
     headers: JSON.parse(result.headers)
   } as EmailRecord;
 }
+
+/**
+ * 根据发件人、收件人和时间戳获取多条邮件
+ */
+export async function getEmailsByCondition(
+  db: D1Database,
+  to: string,
+  from: string,
+  timestamp: number,
+  limit: number = 10
+): Promise<EmailRecord[]> {
+  const d1 = drizzle(db);
+  
+  const results = await d1.select()
+    .from(emails)
+    .where(and(
+      like(emails.to, `%${to}%`),
+      like(emails.from, `%${from}%`),
+      sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
+    ))
+    .orderBy(desc(emails.receivedAt))
+    .limit(limit);
+
+  return results.map(result => ({
+    ...result,
+    headers: JSON.parse(result.headers)
+  })) as EmailRecord[];
+}

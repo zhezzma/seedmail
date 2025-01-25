@@ -354,3 +354,64 @@ export async function handleGetLatestEmail(
     throw error;
   }
 }
+
+/**
+ * 获取指定条件的多条邮件
+ */
+export async function handleGetEmails(
+  request: Request,
+  env: Env,
+  requestId: string
+): Promise<Response> {
+  const url = new URL(request.url);
+  const to = url.searchParams.get('to');
+  const from = url.searchParams.get('from');
+  const timestamp = url.searchParams.get('timestamp');
+  const limit = url.searchParams.get('limit');
+
+  if (!to || !from || !timestamp) {
+    return new Response(
+      JSON.stringify({ error: 'Missing required parameters' }),
+      {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' }
+      }
+    );
+  }
+
+  try {
+    const emails = await emailService.getEmailsByCondition(
+      env.DB,
+      to,
+      from,
+      parseInt(timestamp),
+      limit ? parseInt(limit) : undefined
+    );
+
+    if (emails.length === 0) {
+      return new Response(
+        JSON.stringify({ message: 'No emails found' }),
+        {
+          status: 404,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      );
+    }
+
+    const results = await Promise.all(
+      emails.map(async (email) => {
+        const binaryData = Buffer.from(email.rawEmail, 'base64');
+        const parsed = await PostalMime.parse(binaryData);
+        return { id: email.id, ...parsed };
+      })
+    );
+
+    return new Response(
+      JSON.stringify(results),
+      { headers: { 'Content-Type': 'application/json' } }
+    );
+  } catch (error) {
+    console.error(`[${requestId}] 获取指定邮件失败:`, error);
+    throw error;
+  }
+}
