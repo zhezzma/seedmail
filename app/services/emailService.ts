@@ -208,6 +208,7 @@ export async function toggleStarEmail(
   return newStarred === 1;
 }
 
+
 /**
  * 根据发件人、收件人和时间戳获取最新的邮件
  */
@@ -219,24 +220,23 @@ export async function getLatestEmailByCondition(
 ): Promise<EmailRecord | null> {
   const d1 = drizzle(db);
   
+  // 处理特殊字符并转义
+  const escapePattern = (str: string) => str.replace(/[%_]/g, '\\$&');
+  const escapedTo = `%${escapePattern(to)}%`;
+  const escapedFrom = `%${escapePattern(from)}%`;
+
   const result = await d1.select()
     .from(emails)
     .where(and(
-      like(emails.to, `%${to}%`),
-      like(emails.from, `%${from}%`),
-      // 将 receivedAt 转换为时间戳进行比较
+      sql`LOWER(${emails.to}) LIKE LOWER(${escapedTo}) ESCAPE '\\'`,
+      sql`LOWER(${emails.from}) LIKE LOWER(${escapedFrom}) ESCAPE '\\'`,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))
     .limit(1)
     .get();
 
-  if (!result) return null;
-
-  return {
-    ...result,
-    headers: JSON.parse(result.headers)
-  } as EmailRecord;
+  return result ? { ...result, headers: JSON.parse(result.headers) } as EmailRecord : null;
 }
 
 /**
@@ -251,11 +251,16 @@ export async function getEmailsByCondition(
 ): Promise<EmailRecord[]> {
   const d1 = drizzle(db);
   
+  // 处理特殊字符并转义
+  const escapePattern = (str: string) => str.replace(/[%_]/g, '\\$&');
+  const escapedTo = `%${escapePattern(to)}%`;
+  const escapedFrom = `%${escapePattern(from)}%`;
+
   const results = await d1.select()
     .from(emails)
     .where(and(
-      like(emails.to, `%${to}%`),
-      like(emails.from, `%${from}%`),
+      sql`LOWER(${emails.to}) LIKE LOWER(${escapedTo}) ESCAPE '\\'`,
+      sql`LOWER(${emails.from}) LIKE LOWER(${escapedFrom}) ESCAPE '\\'`,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))
