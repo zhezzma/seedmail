@@ -210,7 +210,7 @@ export async function toggleStarEmail(
 
 
 /**
- * 根据发件人、收件人和时间戳获取最新的邮件
+ * 根据发件人、收件人和时间戳获取最新的邮件（D1兼容版本）
  */
 export async function getLatestEmailByCondition(
   db: D1Database,
@@ -220,16 +220,17 @@ export async function getLatestEmailByCondition(
 ): Promise<EmailRecord | null> {
   const d1 = drizzle(db);
   
-  // 处理特殊字符并转义
-  const escapePattern = (str: string) => str.replace(/[%_]/g, '\\$&');
-  const escapedTo = `%${escapePattern(to)}%`;
-  const escapedFrom = `%${escapePattern(from)}%`;
+  // D1/SQLite专用转义处理
+  const escapeSQLiteLike = (str: string) => str.replace(/[\\%_]/g, '\\$&');
+  const toPattern = `%${escapeSQLiteLike(to)}%`;
+  const fromPattern = `%${escapeSQLiteLike(from)}%`;
 
   const result = await d1.select()
     .from(emails)
     .where(and(
-      sql`LOWER(${emails.to}) LIKE LOWER(${escapedTo}) ESCAPE '\\'`,
-      sql`LOWER(${emails.from}) LIKE LOWER(${escapedFrom}) ESCAPE '\\'`,
+      // 使用SQLite的NOCASE校对规则
+      sql`${emails.to} LIKE ${toPattern} ESCAPE '\\' COLLATE NOCASE`,
+      sql`${emails.from} LIKE ${fromPattern} ESCAPE '\\' COLLATE NOCASE`,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))
@@ -240,7 +241,7 @@ export async function getLatestEmailByCondition(
 }
 
 /**
- * 根据发件人、收件人和时间戳获取多条邮件
+ * 根据发件人、收件人和时间戳获取多条邮件（D1兼容版本）
  */
 export async function getEmailsByCondition(
   db: D1Database,
@@ -251,16 +252,15 @@ export async function getEmailsByCondition(
 ): Promise<EmailRecord[]> {
   const d1 = drizzle(db);
   
-  // 处理特殊字符并转义
-  const escapePattern = (str: string) => str.replace(/[%_]/g, '\\$&');
-  const escapedTo = `%${escapePattern(to)}%`;
-  const escapedFrom = `%${escapePattern(from)}%`;
+  const escapeSQLiteLike = (str: string) => str.replace(/[\\%_]/g, '\\$&');
+  const toPattern = `%${escapeSQLiteLike(to)}%`;
+  const fromPattern = `%${escapeSQLiteLike(from)}%`;
 
   const results = await d1.select()
     .from(emails)
     .where(and(
-      sql`LOWER(${emails.to}) LIKE LOWER(${escapedTo}) ESCAPE '\\'`,
-      sql`LOWER(${emails.from}) LIKE LOWER(${escapedFrom}) ESCAPE '\\'`,
+      sql`${emails.to} LIKE ${toPattern} ESCAPE '\\' COLLATE NOCASE`,
+      sql`${emails.from} LIKE ${fromPattern} ESCAPE '\\' COLLATE NOCASE`,
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
     .orderBy(desc(emails.receivedAt))
