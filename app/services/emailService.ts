@@ -3,7 +3,7 @@ import { EmailRecord, EmailSendRequest, EmailType } from '../types/email';
 import { CreateEmailResponse, Resend } from 'resend';
 import { Buffer } from 'node:buffer';
 import { emails } from '../db/schema';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { eq, desc, and, sql, like } from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/d1';
 import { updateUsersList } from './userService';
 import * as crypto from 'node:crypto'
@@ -222,8 +222,8 @@ export async function getLatestEmailByCondition(
   const result = await d1.select()
     .from(emails)
     .where(and(
-      eq(emails.to, to),
-      eq(emails.from, from),
+      like(emails.to, `%${to}%`),
+      like(emails.from, `%${from}%`),
       // 将 receivedAt 转换为时间戳进行比较
       sql`CAST(strftime('%s', ${emails.receivedAt}) AS INTEGER) >= ${timestamp}`
     ))
