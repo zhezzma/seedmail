@@ -21,14 +21,10 @@ export async function handleEmailEvent(request: Request, env: Env, requestId: st
         if (!feishu.emails.includes(emailData.to)) {
             return new Response('Email not in notification list', { status: 403 });
         }
-        console.log(emailData)
         const binaryData = Buffer.from(emailData.content, 'base64');
         const parsed = await PostalMime.parse(binaryData);
-
-        console.log(parsed)
-
         // 构造通知消息
-        const notificationMessage = `收到新邮件通知\n标题：${emailData.subject}\n发送者：${emailData.from}\n时间：${parsed.date || new Date().toISOString()}\n内容：${parsed.text || parsed.html || '无'}`;
+        const notificationMessage = `你的${emailData.to}收到新邮件通知\n标题：${emailData.subject}\n发送者：${emailData.from}\n时间：${parsed.date || new Date().toISOString()}\n内容：${parsed.text || parsed.html || '无'}`;
 
         // 发送通知
         try {
