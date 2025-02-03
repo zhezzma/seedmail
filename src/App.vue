@@ -26,6 +26,11 @@ const menu = [
     name: '用户列表',
     path: '/users',
     icon: 'user-circle'
+  },
+  {
+    name: '邮箱设置',
+    path: '/setting',
+    icon: 'setting'
   }
 ];
 

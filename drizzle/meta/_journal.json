@@ -15,6 +15,13 @@
       "when": 1734882731074,
       "tag": "0001_wonderful_moonstone",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1738584812105,
+      "tag": "0002_needy_liz_osborn",
+      "breakpoints": true
     }
   ]
 }

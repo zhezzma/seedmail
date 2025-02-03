@@ -47,7 +47,13 @@ const routes = [
     name: 'Starred',
     component: () => import('../views/Starred.vue'),
     meta: { requiresAuth: true }
-  }
+  },
+  {
+    path: '/setting',
+    name: 'Setting',
+    component: () => import('../views/Setting.vue'),
+    meta: { requiresAuth: true }
+  },
 ];
 
 export const router = createRouter({

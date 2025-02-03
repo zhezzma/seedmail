@@ -9,13 +9,15 @@ export const emailApi = {
       `${API_BASE_URL}/api/emails?type=${type}&page=${page}&pageSize=${pageSize}`,
       { headers: getHeaders() }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
   async getEmail(id: string) {
     const response = await fetch(`${API_BASE_URL}/api/email/${id}`,
       { headers: getHeaders() }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async deleteEmail(id: string) {
@@ -23,7 +25,8 @@ export const emailApi = {
       `${API_BASE_URL}/api/email/${id}`,
       { method: 'DELETE', headers: getHeaders() }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async deleteEmails(ids: string[]) {
@@ -35,7 +38,8 @@ export const emailApi = {
         body: JSON.stringify({ ids })
       }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async sendEmail(emailData: Partial<EmailRecord>) {
@@ -47,7 +51,8 @@ export const emailApi = {
         body: JSON.stringify(emailData)
       }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async toggleStar(id: string) {
@@ -58,6 +63,7 @@ export const emailApi = {
         headers: getHeaders() 
       }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   }
 };

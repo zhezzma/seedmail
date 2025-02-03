@@ -17,6 +17,7 @@ declare module 'vue' {
     TCheckbox: typeof import('tdesign-vue-next')['Checkbox']
     TContent: typeof import('tdesign-vue-next')['Content']
     TDialog: typeof import('tdesign-vue-next')['Dialog']
+    TDivider: typeof import('tdesign-vue-next')['Divider']
     TDrawer: typeof import('tdesign-vue-next')['Drawer']
     TEmpty: typeof import('tdesign-vue-next')['Empty']
     TFooter: typeof import('tdesign-vue-next')['Footer']
@@ -34,6 +35,7 @@ declare module 'vue' {
     TSpace: typeof import('tdesign-vue-next')['Space']
     TTable: typeof import('tdesign-vue-next')['Table']
     TTag: typeof import('tdesign-vue-next')['Tag']
+    TTagInput: typeof import('tdesign-vue-next')['TagInput']
     TTextarea: typeof import('tdesign-vue-next')['Textarea']
   }
 }

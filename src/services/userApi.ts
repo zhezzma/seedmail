@@ -15,7 +15,8 @@ export const userApi = {
       },
       body: JSON.stringify({ username, password }),
     });
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async listUsers(page: number = 1, pageSize: number = 20) {
@@ -23,7 +24,8 @@ export const userApi = {
       `${API_BASE_URL}/api/users?page=${page}&pageSize=${pageSize}`,
       { headers: getHeaders() }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   },
 
   async deleteUser(email: string) {
@@ -34,7 +36,8 @@ export const userApi = {
         headers: getHeaders()
       }
     );
-    return handleResponse(response);
+    handleResponse(response);
+    return await response.json();
   }
 };
 

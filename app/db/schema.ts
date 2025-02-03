@@ -22,3 +22,8 @@ export const emails = sqliteTable('emails', {
   starred: int('starred').notNull().default(0),
   readed: int('readed').notNull().default(0)
 });
+
+export const settings = sqliteTable('settings', {
+  key: text('key').primaryKey(),
+  value: text('value'),
+});

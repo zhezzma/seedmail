@@ -94,8 +94,32 @@ export async function emailHandler(message, env, ctx) {
       ).bind(message.to, new Date().toISOString()).run();
     }
 
-    // 转发邮件
-    await forwardMail(message);
+    // 检查是否配置了通知服务
+    if (env.notifyUrl && env.notifyToken) {
+      try {
+        await fetch(env.notifyUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${env.notifyToken}`
+          },
+          body: JSON.stringify({
+            from: message.from,
+            to: message.to,
+            subject: emailData.subject,
+            content: rawBase64
+          })
+        });
+      } catch (error) {
+        console.error('Failed to send notification:', error);
+        // 通知失败继续执行，不影响主流程
+      }
+    }
+
+    // 仅在配置了转发地址时转发邮件
+    if (env.forwardMail) {
+      await forwardMail(env.forwardMail, message);
+    }
 
     return new Response('Email processed successfully', {
       status: 200,
@@ -103,10 +127,12 @@ export async function emailHandler(message, env, ctx) {
     });
   } catch (error) {
     console.error('Error processing email:', error);
-    // 发生错误时仍尝试转发邮件
-    await forwardMail(message).catch(err =>
-      console.error('Forward failed after error:', err)
-    );
+    // 发生错误时仅在配置了转发地址时尝试转发邮件
+    if (env.forwardMail) {
+      await forwardMail(env.forwardMail, message).catch(err =>
+        console.error('Forward failed after error:', err)
+      );
+    }
     return new Response(JSON.stringify({
       error: 'Internal server error',
       message: error.message
@@ -119,12 +145,13 @@ export async function emailHandler(message, env, ctx) {
 
 /**
  * 转发邮件到指定地址
+ * @param {string} mail - 转发地址
  * @param {ForwardableEmailMessage} message - Cloudflare Email消息对象
  * @returns {Promise<void>}
  */
-async function forwardMail(message) {
+async function forwardMail(mail, message) {
   try {
-    await message.forward("zhepama@igiven.com");
+    await message.forward(mail);
   } catch (error) {
     console.error('Failed to forward email:', error);
     throw error;

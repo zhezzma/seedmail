@@ -15,6 +15,10 @@ import {
     handleGetEmails
 } from '../../app/handlers/emailHandlers';
 import { handleListUsers, handleDeleteUser } from '../../app/handlers/userHandler';
+import { handleGetSettings, handleUpdateSettings } from '../../app/handlers/settingHandler';
+import { handleEmailEvent } from '../../app/handlers/feishuHandler';
+
+
 export const onRequest = async (context: EventContext<Env, string, Record<string, unknown>>): Promise<Response> => {
 
     const request = context.request;
@@ -71,6 +75,15 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             return addCorsHeaders(response);
         }
 
+        if (url.pathname === '/api/event' && request.method === 'POST') {
+            const authResponse = await authApiToken(request, env, requestId);
+            if (authResponse) {
+                return addCorsHeaders(authResponse);
+            }
+            const response = await handleEmailEvent(request, env, requestId);
+            return addCorsHeaders(response);
+        }
+  
         // 验证权限
         const authResponse = await authMiddleware(request, env, requestId);
         if (authResponse) {
@@ -111,6 +124,14 @@ export const onRequest = async (context: EventContext<Env, string, Record<string
             //删除用户
             case url.pathname.startsWith('/api/users/') && request.method === 'DELETE':
                 response = await handleDeleteUser(request, env, requestId);
+                break;
+            //获取设置
+            case url.pathname === '/api/setting' && request.method === 'GET':
+                response = await handleGetSettings(request, env, requestId);
+                break;
+            //更新设置
+            case url.pathname === '/api/setting' && request.method === 'POST':
+                response = await handleUpdateSettings(request, env, requestId);
                 break;
             default:
                 console.log(`[${requestId}] 未找到匹配的路由`);
