@@ -5,6 +5,7 @@ compatibility_flags = [ "nodejs_compat" ]
 # Pages 配置
 pages_build_output_dir = "dist"
 
+vars = {}  # 不要在这里写入实际值 写在.dev.vars
 
 [[d1_databases]]
 binding = "DB"
